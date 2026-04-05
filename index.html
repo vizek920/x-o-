@@ -3,964 +3,714 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>تحدي X O</title>
+<title>تحدي X O — النسخة المتكاملة</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #050510;
-  --surface: #0d0d20;
-  --surface2: #12122a;
-  --border: #1e1e40;
-  --x-color: #ff3366;
-  --x-glow: rgba(255,51,102,0.5);
-  --o-color: #00d4ff;
-  --o-glow: rgba(0,212,255,0.5);
-  --gold: #ffd700;
-  --text: #e8e8ff;
-  --text-dim: #6060a0;
-  --success: #00ff88;
-  --danger: #ff3366;
-  --radius: 20px;
+  --bg:#050510; --surface:#0d0d22; --surface2:#12122e; --border:#1e1e45;
+  --x:#ff3366; --xg:rgba(255,51,102,.5); --o:#00d4ff; --og:rgba(0,212,255,.5);
+  --gold:#ffd700; --golg:rgba(255,215,0,.35);
+  --green:#00ff88; --purple:#9945ff;
+  --text:#e8e8ff; --dim:#6060a0;
+  --r:18px;
 }
-* { margin:0; padding:0; box-sizing:border-box; }
-html, body { width:100%; min-height:100vh; overflow-x:hidden; }
-body {
-  font-family: 'Cairo', 'Tajawal', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;min-height:100vh;overflow-x:hidden;}
+body{font-family:'Cairo','Tajawal',sans-serif;background:var(--bg);color:var(--text);}
+#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;}
 
-/* ===== CANVAS BG ===== */
-#bgCanvas {
-  position: fixed; top:0; left:0;
-  width:100%; height:100%;
-  z-index: 0; pointer-events:none;
-}
+/* ── PAGES ── */
+.page{display:none;position:relative;z-index:1;min-height:100vh;
+  align-items:center;justify-content:center;flex-direction:column;padding:16px;}
+.page.active{display:flex;}
 
-/* ===== PAGES ===== */
-.page {
-  display: none; position: relative; z-index:1;
-  min-height: 100vh;
-  align-items: center; justify-content: center;
-  flex-direction: column; padding: 20px;
-}
-.page.active { display: flex; }
+/* ── KEYFRAMES ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(36px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{0%{opacity:0;transform:scale(.5) translateY(20px)}70%{transform:scale(1.04)}100%{opacity:1;transform:scale(1)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+@keyframes glowX{0%,100%{text-shadow:0 0 20px var(--xg),0 0 60px var(--xg)}50%{text-shadow:0 0 40px var(--xg),0 0 100px var(--xg),0 0 4px #fff}}
+@keyframes glowO{0%,100%{text-shadow:0 0 20px var(--og),0 0 60px var(--og)}50%{text-shadow:0 0 40px var(--og),0 0 100px var(--og),0 0 4px #fff}}
+@keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%,75%{transform:translateX(-7px)}50%{transform:translateX(7px)}}
+@keyframes winPulse{0%{box-shadow:0 0 0 0 rgba(255,215,0,.8)}70%{box-shadow:0 0 0 18px rgba(255,215,0,0)}100%{box-shadow:0 0 0 0 rgba(255,215,0,0)}}
+@keyframes confettiFall{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(700deg);opacity:0}}
+@keyframes timerWarn{0%,100%{color:var(--x);text-shadow:0 0 18px var(--x)}50%{color:#ff8800;text-shadow:0 0 28px #ff8800}}
+@keyframes slideIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes borderGlow{0%,100%{border-color:var(--x)}50%{border-color:var(--o)}}
+@keyframes roundBanner{0%{opacity:0;transform:scale(.4) rotate(-8deg)}60%{transform:scale(1.08) rotate(1deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
 
-/* ===== ANIMATIONS ===== */
-@keyframes fadeUp {
-  from { opacity:0; transform: translateY(40px); }
-  to   { opacity:1; transform: translateY(0); }
-}
-@keyframes pulse {
-  0%,100% { transform: scale(1); }
-  50%      { transform: scale(1.05); }
-}
-@keyframes glow-x {
-  0%,100% { text-shadow: 0 0 20px var(--x-glow), 0 0 60px var(--x-glow); }
-  50%      { text-shadow: 0 0 40px var(--x-glow), 0 0 100px var(--x-glow), 0 0 5px #fff; }
-}
-@keyframes glow-o {
-  0%,100% { text-shadow: 0 0 20px var(--o-glow), 0 0 60px var(--o-glow); }
-  50%      { text-shadow: 0 0 40px var(--o-glow), 0 0 100px var(--o-glow), 0 0 5px #fff; }
-}
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-@keyframes countPulse {
-  0%   { transform: scale(1); }
-  50%  { transform: scale(1.3); }
-  100% { transform: scale(1); }
-}
-@keyframes shake {
-  0%,100% { transform: translateX(0); }
-  20%,60% { transform: translateX(-8px); }
-  40%,80% { transform: translateX(8px); }
-}
-@keyframes popIn {
-  0%   { transform: scale(0.5) translateY(30px); opacity:0; }
-  70%  { transform: scale(1.05) translateY(-5px); opacity:1; }
-  100% { transform: scale(1) translateY(0); opacity:1; }
-}
-@keyframes shimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position: 200% center; }
-}
-@keyframes borderRun {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-@keyframes float {
-  0%,100% { transform: translateY(0px); }
-  50%      { transform: translateY(-12px); }
-}
-@keyframes winPulse {
-  0%   { box-shadow: 0 0 0 0 rgba(255,215,0,0.7); }
-  70%  { box-shadow: 0 0 0 20px rgba(255,215,0,0); }
-  100% { box-shadow: 0 0 0 0 rgba(255,215,0,0); }
-}
-@keyframes confetti-fall {
-  0%   { transform: translateY(-20px) rotate(0deg); opacity:1; }
-  100% { transform: translateY(100vh) rotate(720deg); opacity:0; }
-}
-@keyframes timerWarning {
-  0%,100% { color: var(--danger); text-shadow: 0 0 20px var(--danger); }
-  50%      { color: #ff8800; text-shadow: 0 0 30px #ff8800; }
-}
+/* ── WELCOME ── */
+.logo-wrap{animation:float 3s ease-in-out infinite;margin-bottom:8px;text-align:center;}
+.logo-x{font-size:clamp(5rem,14vw,9rem);font-weight:900;display:inline-block;color:var(--x);animation:glowX 2.2s ease-in-out infinite;}
+.logo-sep{font-size:clamp(2rem,6vw,4rem);font-weight:300;color:var(--dim);margin:0 12px;vertical-align:middle;}
+.logo-o{font-size:clamp(5rem,14vw,9rem);font-weight:900;display:inline-block;color:var(--o);animation:glowO 2.2s ease-in-out infinite .5s;}
+.welcome-sub{font-size:clamp(1rem,3.5vw,1.6rem);font-weight:700;letter-spacing:4px;margin-bottom:44px;animation:fadeUp .8s ease both .3s;
+  background:linear-gradient(90deg,var(--x),var(--o),var(--gold),var(--x));background-size:300% auto;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 3s linear infinite,fadeUp .8s ease both .3s;}
+.btn-cta{padding:17px 56px;border:none;border-radius:50px;cursor:pointer;font-family:'Cairo',sans-serif;
+  font-size:1.2rem;font-weight:800;letter-spacing:2px;
+  background:linear-gradient(135deg,var(--x),var(--purple),var(--o));color:#fff;
+  box-shadow:0 0 30px rgba(153,69,255,.5),0 0 70px rgba(153,69,255,.2);
+  transition:transform .2s,box-shadow .2s;animation:fadeUp .8s ease both .5s;position:relative;overflow:hidden;}
+.btn-cta::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--o),var(--purple),var(--x));opacity:0;transition:opacity .3s;}
+.btn-cta span{position:relative;z-index:1;}
+.btn-cta:hover{transform:scale(1.06);box-shadow:0 0 50px rgba(153,69,255,.8);}
+.btn-cta:hover::after{opacity:1;}
+.admin-link{margin-top:22px;font-size:.85rem;color:var(--dim);cursor:pointer;transition:color .2s;animation:fadeUp .8s ease both .7s;}
+.admin-link:hover{color:var(--gold);}
 
-/* ===== WELCOME PAGE ===== */
-#welcomePage {
-  background: transparent;
-}
-.welcome-logo {
-  font-size: clamp(5rem, 15vw, 10rem);
-  font-weight: 900;
-  line-height: 1;
-  animation: float 3s ease-in-out infinite;
-  margin-bottom: 10px;
-  position: relative;
-}
-.logo-x {
-  color: var(--x-color);
-  animation: glow-x 2s ease-in-out infinite;
-  display: inline-block;
-}
-.logo-o {
-  color: var(--o-color);
-  animation: glow-o 2s ease-in-out infinite 0.5s;
-  display: inline-block;
-}
-.welcome-title {
-  font-size: clamp(1.4rem, 4vw, 2.2rem);
-  font-weight: 700;
-  color: var(--text-dim);
-  letter-spacing: 4px;
-  margin-bottom: 50px;
-  text-align: center;
-  animation: fadeUp 0.8s ease both 0.3s;
-}
-.welcome-title span {
-  background: linear-gradient(90deg, var(--x-color), var(--o-color), var(--gold), var(--x-color));
-  background-size: 300% auto;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: shimmer 3s linear infinite;
-}
-.btn-start {
-  position: relative;
-  padding: 18px 60px;
-  font-size: 1.3rem;
-  font-weight: 700;
-  font-family: 'Cairo', sans-serif;
-  border: none;
-  border-radius: 50px;
-  cursor: pointer;
-  overflow: hidden;
-  transition: transform 0.2s, box-shadow 0.2s;
-  animation: fadeUp 0.8s ease both 0.5s;
-  background: linear-gradient(135deg, var(--x-color), #9900ff, var(--o-color));
-  color: #fff;
-  letter-spacing: 2px;
-  box-shadow: 0 0 30px rgba(153,0,255,0.4), 0 0 60px rgba(153,0,255,0.2);
-}
-.btn-start::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(135deg, var(--o-color), #9900ff, var(--x-color));
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-.btn-start:hover { transform: scale(1.05); box-shadow: 0 0 50px rgba(153,0,255,0.7); }
-.btn-start:hover::before { opacity: 1; }
-.btn-start span { position: relative; z-index:1; }
-.btn-start:active { transform: scale(0.97); }
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:26px;
+  padding:36px 30px;width:100%;position:relative;overflow:hidden;
+  box-shadow:0 0 60px rgba(0,0,0,.6);}
+.card::before{content:'';position:absolute;inset:0;border-radius:26px;padding:1.5px;
+  background:linear-gradient(135deg,var(--x),transparent 40%,var(--o));
+  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;}
+.card-title{text-align:center;font-size:1.5rem;font-weight:900;margin-bottom:28px;
+  background:linear-gradient(90deg,var(--x),var(--o));-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;background-clip:text;}
 
-/* ===== TEAM SETUP ===== */
-#setupPage .setup-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 28px;
-  padding: 40px;
-  width: 100%;
-  max-width: 560px;
-  animation: popIn 0.5s ease both;
-  box-shadow: 0 0 60px rgba(0,0,0,0.5), 0 0 120px rgba(0,0,0,0.3);
-  position: relative;
-  overflow: hidden;
-}
-#setupPage .setup-card::before {
-  content:'';
-  position: absolute; inset:0;
-  border-radius: 28px;
-  padding: 2px;
-  background: linear-gradient(135deg, var(--x-color), transparent 40%, var(--o-color));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
-.setup-title {
-  text-align: center;
-  font-size: 1.6rem;
-  font-weight: 800;
-  margin-bottom: 35px;
-  background: linear-gradient(90deg, var(--x-color), var(--o-color));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.team-input-wrap {
-  margin-bottom: 22px;
-}
-.team-label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 10px;
-}
-.team-badge {
-  width: 32px; height: 32px;
-  border-radius: 8px;
-  display: flex; align-items:center; justify-content:center;
-  font-size: 1.1rem; font-weight: 900;
-}
-.badge-x { background: rgba(255,51,102,0.2); color: var(--x-color); border: 1px solid var(--x-color); }
-.badge-o { background: rgba(0,212,255,0.2); color: var(--o-color); border: 1px solid var(--o-color); }
+/* ── FORM ELEMENTS ── */
+.field{margin-bottom:18px;}
+.field label{display:flex;align-items:center;gap:8px;font-size:.9rem;font-weight:600;margin-bottom:8px;color:var(--dim);}
+.field label strong{color:var(--text);}
+.inp{width:100%;padding:13px 16px;background:var(--surface2);border:1.5px solid var(--border);
+  border-radius:12px;color:var(--text);font-family:'Cairo',sans-serif;font-size:.95rem;
+  outline:none;transition:border-color .3s,box-shadow .3s;text-align:right;}
+.inp:focus{border-color:var(--o);box-shadow:0 0 0 3px rgba(0,212,255,.15);}
+.inp.x-inp:focus{border-color:var(--x);box-shadow:0 0 0 3px rgba(255,51,102,.15);}
+.tbadge{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:900;}
+.bx{background:rgba(255,51,102,.15);color:var(--x);border:1px solid var(--x);}
+.bo{background:rgba(0,212,255,.15);color:var(--o);border:1px solid var(--o);}
 
-.team-input {
-  width: 100%;
-  padding: 14px 18px;
-  background: var(--surface2);
-  border: 1.5px solid var(--border);
-  border-radius: 12px;
-  color: var(--text);
-  font-family: 'Cairo', sans-serif;
-  font-size: 1rem;
-  transition: border-color 0.3s, box-shadow 0.3s;
-  outline: none;
-  text-align: right;
-}
-.team-input:focus { border-color: var(--o-color); box-shadow: 0 0 0 3px rgba(0,212,255,0.15); }
-.team-input.x-focus:focus { border-color: var(--x-color); box-shadow: 0 0 0 3px rgba(255,51,102,0.15); }
+.row-ctrl{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:12px;padding:11px 15px;margin-bottom:16px;}
+.row-ctrl .lbl{flex:1;font-size:.9rem;color:var(--dim);}
+.num-ctrl{display:flex;align-items:center;gap:8px;}
+.nb{width:28px;height:28px;border-radius:7px;border:none;cursor:pointer;background:var(--border);
+  color:var(--text);font-size:1rem;font-weight:700;transition:background .2s;display:flex;align-items:center;justify-content:center;}
+.nb:hover{background:var(--o);color:#000;}
+.nv{font-size:1rem;font-weight:800;min-width:32px;text-align:center;color:var(--o);}
 
-.settings-row {
-  display: flex; align-items: center; gap: 12px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px 16px;
-  margin-bottom: 22px;
-}
-.settings-label { flex:1; font-size: 0.95rem; color: var(--text-dim); }
-.timer-control {
-  display: flex; align-items:center; gap:8px;
-}
-.timer-btn {
-  width:30px; height:30px;
-  border-radius: 8px; border:none; cursor:pointer;
-  background: var(--border); color: var(--text);
-  font-size:1.1rem; font-weight:700;
-  transition: background 0.2s;
-  display:flex; align-items:center; justify-content:center;
-}
-.timer-btn:hover { background: var(--o-color); color: #000; }
-#timerVal { font-size:1.1rem; font-weight:700; min-width:35px; text-align:center; color: var(--o-color); }
+.btn-primary{width:100%;padding:15px;background:linear-gradient(135deg,var(--x),var(--purple));
+  border:none;border-radius:13px;color:#fff;font-family:'Cairo',sans-serif;font-size:1rem;
+  font-weight:800;cursor:pointer;letter-spacing:1px;transition:transform .2s,box-shadow .2s;
+  box-shadow:0 4px 22px rgba(255,51,102,.35);margin-top:4px;}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(255,51,102,.6);}
+.btn-primary:active{transform:translateY(0);}
+.btn-gold{background:linear-gradient(135deg,var(--gold),#ff9900);color:#000;box-shadow:0 4px 22px rgba(255,215,0,.35);}
+.btn-gold:hover{box-shadow:0 8px 32px rgba(255,215,0,.65);}
+.btn-green{background:linear-gradient(135deg,#00cc66,var(--green));color:#000;box-shadow:0 4px 22px rgba(0,255,136,.35);}
+.btn-green:hover{box-shadow:0 8px 32px rgba(0,255,136,.65);}
 
-.btn-play {
-  width: 100%;
-  padding: 16px;
-  background: linear-gradient(135deg, var(--x-color), #9900ff);
-  border: none; border-radius: 14px;
-  color: #fff; font-family:'Cairo',sans-serif;
-  font-size: 1.1rem; font-weight: 800;
-  cursor: pointer; letter-spacing: 1px;
-  transition: transform 0.2s, box-shadow 0.2s;
-  box-shadow: 0 4px 25px rgba(255,51,102,0.4);
-  margin-top: 5px;
-}
-.btn-play:hover { transform: translateY(-2px); box-shadow: 0 8px 35px rgba(255,51,102,0.6); }
-.btn-play:active { transform: translateY(0); }
+/* ── GAME HEADER ── */
+#gamePage{padding:10px 14px;gap:10px;}
+.g-header{width:100%;max-width:680px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.score-card{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:15px;
+  padding:10px 14px;text-align:center;transition:all .3s;position:relative;overflow:hidden;}
+.score-card.active.sx{border-color:var(--x);box-shadow:0 0 22px var(--xg);transform:translateY(-3px);}
+.score-card.active.so{border-color:var(--o);box-shadow:0 0 22px var(--og);transform:translateY(-3px);}
+.sc-name{font-size:.8rem;font-weight:600;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sc-sym{font-size:1.5rem;font-weight:900;line-height:1.1;}
+.sx .sc-sym{color:var(--x);text-shadow:0 0 14px var(--xg);}
+.so .sc-sym{color:var(--o);text-shadow:0 0 14px var(--og);}
+.sc-pts{font-size:.8rem;font-weight:700;color:var(--gold);}
+.turn-mid{text-align:center;padding:0 8px;}
+.turn-lbl{font-size:.65rem;color:var(--dim);}
+.turn-nm{font-size:.82rem;font-weight:800;max-width:75px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 
-/* ===== GAME PAGE ===== */
-#gamePage {
-  padding: 12px 16px;
-  gap: 12px;
-}
-.game-header {
-  width: 100%;
-  max-width: 680px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-}
-.team-score-card {
-  flex: 1;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 12px 16px;
-  text-align: center;
-  transition: all 0.3s;
-  position: relative;
-  overflow: hidden;
-}
-.team-score-card.active-team {
-  transform: translateY(-3px);
-}
-.team-score-card.active-team.team-x {
-  border-color: var(--x-color);
-  box-shadow: 0 0 20px var(--x-glow), 0 0 40px rgba(255,51,102,0.15);
-}
-.team-score-card.active-team.team-o {
-  border-color: var(--o-color);
-  box-shadow: 0 0 20px var(--o-glow), 0 0 40px rgba(0,212,255,0.15);
-}
-.team-score-name {
-  font-size: 0.85rem; font-weight: 600; color: var(--text-dim);
-  margin-bottom: 2px; white-space: nowrap; overflow: hidden;
-  text-overflow: ellipsis;
-}
-.team-score-symbol {
-  font-size: 1.6rem; font-weight: 900; line-height:1;
-}
-.sym-x { color: var(--x-color); text-shadow: 0 0 15px var(--x-glow); }
-.sym-o { color: var(--o-color); text-shadow: 0 0 15px var(--o-glow); }
-.team-score-val {
-  font-size: 0.9rem; font-weight: 700; margin-top: 2px;
-  color: var(--gold);
-}
-.turn-indicator {
-  text-align: center;
-  padding: 0 10px;
-}
-.turn-text {
-  font-size: 0.7rem; color: var(--text-dim); margin-bottom: 2px;
-}
-.turn-name {
-  font-size: 0.9rem; font-weight: 800;
-  max-width: 80px;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
+/* round badge */
+.round-badge{background:var(--surface2);border:1px solid var(--border);border-radius:30px;
+  padding:5px 14px;font-size:.78rem;font-weight:700;color:var(--gold);text-align:center;
+  width:100%;max-width:680px;}
 
-/* ===== BOARD ===== */
-.board {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  width: 100%;
-  max-width: 380px;
-}
-.cell {
-  aspect-ratio: 1;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: 18px;
-  display: flex; align-items:center; justify-content:center;
-  cursor: pointer;
-  font-size: 1.5rem; font-weight: 800;
-  color: var(--text-dim);
-  transition: all 0.25s;
-  position: relative;
-  overflow: hidden;
-  user-select: none;
-}
-.cell::before {
-  content: '';
-  position: absolute; inset:0;
-  border-radius: 18px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent);
-  opacity:0; transition: opacity 0.3s;
-}
-.cell:hover:not(.taken) {
-  border-color: var(--o-color);
-  box-shadow: 0 0 20px rgba(0,212,255,0.2);
-  transform: scale(1.03);
-  color: var(--text);
-}
-.cell:hover:not(.taken)::before { opacity:1; }
-.cell.taken { cursor: default; }
-.cell.taken-x {
-  background: rgba(255,51,102,0.1);
-  border-color: var(--x-color);
-  box-shadow: 0 0 20px rgba(255,51,102,0.2), inset 0 0 15px rgba(255,51,102,0.05);
-  color: var(--x-color);
-  font-size: 2.2rem;
-  animation: popIn 0.4s ease;
-}
-.cell.taken-o {
-  background: rgba(0,212,255,0.1);
-  border-color: var(--o-color);
-  box-shadow: 0 0 20px rgba(0,212,255,0.2), inset 0 0 15px rgba(0,212,255,0.05);
-  color: var(--o-color);
-  font-size: 2.2rem;
-  animation: popIn 0.4s ease;
-}
-.cell.win-cell {
-  background: rgba(255,215,0,0.15) !important;
-  border-color: var(--gold) !important;
-  box-shadow: 0 0 30px rgba(255,215,0,0.5) !important;
-  animation: winPulse 1s ease infinite !important;
-}
-.cell-num {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--text-dim);
-  transition: all 0.3s;
-}
+/* ── BOARD ── */
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;width:100%;max-width:370px;}
+.cell{aspect-ratio:1;background:var(--surface);border:1.5px solid var(--border);border-radius:17px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  font-size:1.4rem;font-weight:800;color:var(--dim);transition:all .25s;position:relative;overflow:hidden;user-select:none;}
+.cell:hover:not(.taken){border-color:var(--o);box-shadow:0 0 18px rgba(0,212,255,.25);transform:scale(1.03);color:var(--text);}
+.cell.taken{cursor:default;}
+.cell.cx{background:rgba(255,51,102,.1);border-color:var(--x);box-shadow:0 0 18px rgba(255,51,102,.2);color:var(--x);font-size:2rem;animation:popIn .4s ease;}
+.cell.co{background:rgba(0,212,255,.1);border-color:var(--o);box-shadow:0 0 18px rgba(0,212,255,.2);color:var(--o);font-size:2rem;animation:popIn .4s ease;}
+.cell.win{background:rgba(255,215,0,.14)!important;border-color:var(--gold)!important;box-shadow:0 0 28px var(--golg)!important;animation:winPulse 1s ease infinite!important;}
+.cnum{font-size:1.35rem;font-weight:700;color:var(--dim);}
 
-/* ===== SCORE TRACKER ===== */
-.score-row {
-  display: flex;
-  gap: 8px;
-  width: 100%;
-  max-width: 380px;
-}
-.score-box {
-  flex:1; background: var(--surface);
-  border:1px solid var(--border); border-radius:12px;
-  padding:8px 12px; text-align:center;
-}
-.score-box-label { font-size:0.7rem; color: var(--text-dim); }
-.score-box-val { font-size:1.2rem; font-weight:800; }
+/* stats row */
+.stats-row{display:flex;gap:7px;width:100%;max-width:370px;}
+.stat-box{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:7px 10px;text-align:center;}
+.stat-lbl{font-size:.65rem;color:var(--dim);}
+.stat-val{font-size:1.1rem;font-weight:800;}
 
-/* ===== QUESTION MODAL ===== */
-.modal-overlay {
-  position: fixed; inset:0;
-  background: rgba(5,5,16,0.92);
-  backdrop-filter: blur(8px);
-  z-index: 100;
-  display: none;
-  align-items: center; justify-content: center;
-  padding: 16px;
-}
-.modal-overlay.show { display:flex; }
+/* ── QUESTION MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(5,5,16,.93);backdrop-filter:blur(10px);
+  z-index:100;display:none;align-items:center;justify-content:center;padding:14px;}
+.overlay.show{display:flex;}
+.qmodal{background:var(--surface);border:1px solid var(--border);border-radius:24px;
+  padding:26px 22px;width:100%;max-width:550px;position:relative;animation:popIn .4s ease;
+  box-shadow:0 0 80px rgba(0,0,0,.9);max-height:94vh;overflow-y:auto;}
+.qmodal::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--x),var(--o));border-radius:3px 3px 0 0;}
 
-.question-modal {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  padding: 30px 24px;
-  width: 100%; max-width: 560px;
-  position: relative;
-  animation: popIn 0.4s ease;
-  box-shadow: 0 0 80px rgba(0,0,0,0.8);
-  overflow: hidden;
-  max-height: 95vh;
-  overflow-y: auto;
-}
-.question-modal::before {
-  content:'';
-  position: absolute; top:0; left:0; right:0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--x-color), var(--o-color));
-  border-radius: 3px 3px 0 0;
-}
+/* timer row */
+.timer-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:12px;}
+.tarc{position:relative;width:62px;height:62px;flex-shrink:0;}
+.tarc svg{width:62px;height:62px;transform:rotate(-90deg);}
+.arc-bg{fill:none;stroke:var(--border);stroke-width:5;}
+.arc-fill{fill:none;stroke:var(--o);stroke-width:5;stroke-linecap:round;
+  stroke-dasharray:163;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear,stroke .5s;}
+.tnum{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:1.25rem;font-weight:900;color:var(--o);}
+.qmeta{flex:1;text-align:right;}
+.qbadge{display:inline-block;padding:3px 11px;border-radius:20px;font-size:.72rem;font-weight:700;margin-bottom:5px;}
+.bm{background:rgba(0,212,255,.15);color:var(--o);border:1px solid rgba(0,212,255,.3);}
+.bt{background:rgba(255,215,0,.15);color:var(--gold);border:1px solid rgba(255,215,0,.3);}
+.bo2{background:rgba(153,69,255,.15);color:#c87fff;border:1px solid rgba(153,69,255,.3);}
+.cell-for{font-size:.82rem;color:var(--dim);}
 
-/* timer arc */
-.timer-wrap {
-  display: flex; align-items:center; justify-content:space-between;
-  margin-bottom: 20px;
-  gap: 12px;
-}
-.timer-arc-container {
-  position: relative;
-  width: 64px; height: 64px; flex-shrink:0;
-}
-.timer-arc-container svg {
-  width:64px; height:64px;
-  transform: rotate(-90deg);
-}
-.timer-arc-bg { fill:none; stroke: var(--border); stroke-width:5; }
-.timer-arc-fill {
-  fill:none; stroke: var(--o-color); stroke-width:5;
-  stroke-linecap: round;
-  stroke-dasharray: 163;
-  stroke-dashoffset: 0;
-  transition: stroke-dashoffset 1s linear, stroke 0.5s;
-}
-.timer-num {
-  position: absolute; inset:0;
-  display:flex; align-items:center; justify-content:center;
-  font-size:1.3rem; font-weight:900;
-  color: var(--o-color);
-}
+.qtext{font-size:1.1rem;font-weight:700;line-height:1.65;text-align:right;margin-bottom:20px;color:var(--text);}
 
-.qinfo {
-  flex:1; text-align:right;
-}
-.qtype-badge {
-  display: inline-block;
-  padding: 3px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem; font-weight:700;
-  margin-bottom: 6px;
-}
-.badge-mcq { background: rgba(0,212,255,0.15); color: var(--o-color); border:1px solid rgba(0,212,255,0.3); }
-.badge-tf  { background: rgba(255,215,0,0.15); color: var(--gold); border:1px solid rgba(255,215,0,0.3); }
-.badge-open{ background: rgba(153,0,255,0.15); color: #c87fff; border:1px solid rgba(153,0,255,0.3); }
+/* options */
+.opts-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px;}
+.opt{padding:12px 9px;background:var(--surface2);border:1.5px solid var(--border);border-radius:11px;
+  color:var(--text);font-family:'Cairo',sans-serif;font-size:.9rem;font-weight:600;
+  cursor:pointer;text-align:center;transition:all .2s;line-height:1.4;}
+.opt:hover{border-color:var(--o);background:rgba(0,212,255,.08);transform:translateY(-1px);}
+.opt.ok{background:rgba(0,255,136,.15);border-color:var(--green);color:var(--green);}
+.opt.wrong{background:rgba(255,51,102,.15);border-color:var(--x);color:var(--x);animation:shake .4s ease;}
+.opt.reveal{background:rgba(0,255,136,.1);border-color:var(--green);color:var(--green);}
+.opt:disabled{cursor:default;transform:none;}
 
-.cell-for-label {
-  font-size:0.85rem; color: var(--text-dim);
-}
-.cell-for-label strong { color: var(--text); }
+.tf-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:18px;}
+.tf-btn{padding:17px;border-radius:13px;border:2px solid var(--border);font-family:'Cairo',sans-serif;
+  font-size:1rem;font-weight:800;cursor:pointer;text-align:center;transition:all .2s;
+  background:var(--surface2);color:var(--text);}
+.tf-btn.t-true:hover{border-color:var(--green);background:rgba(0,255,136,.08);color:var(--green);}
+.tf-btn.t-false:hover{border-color:var(--x);background:rgba(255,51,102,.08);color:var(--x);}
 
-.qtext {
-  font-size: 1.15rem; font-weight: 700;
-  line-height: 1.6; text-align:right;
-  margin-bottom: 22px;
-  color: var(--text);
-}
+.open-inp{width:100%;padding:13px;background:var(--surface2);border:1.5px solid var(--border);
+  border-radius:11px;color:var(--text);font-family:'Cairo',sans-serif;font-size:.95rem;
+  text-align:right;outline:none;margin-bottom:11px;transition:border-color .3s,box-shadow .3s;}
+.open-inp:focus{border-color:var(--o);box-shadow:0 0 0 3px rgba(0,212,255,.15);}
 
-/* MCQ options */
-.options-grid {
-  display: grid; grid-template-columns:1fr 1fr;
-  gap: 10px; margin-bottom:20px;
-}
-.opt-btn {
-  padding: 13px 10px;
-  background: var(--surface2);
-  border: 1.5px solid var(--border);
-  border-radius: 12px;
-  color: var(--text); font-family:'Cairo',sans-serif;
-  font-size:0.95rem; font-weight:600;
-  cursor:pointer; text-align:center;
-  transition: all 0.2s;
-  line-height: 1.4;
-}
-.opt-btn:hover { border-color: var(--o-color); background: rgba(0,212,255,0.08); transform:translateY(-1px); }
-.opt-btn.selected-correct {
-  background: rgba(0,255,136,0.15); border-color: var(--success);
-  color: var(--success); box-shadow: 0 0 15px rgba(0,255,136,0.2);
-}
-.opt-btn.selected-wrong {
-  background: rgba(255,51,102,0.15); border-color: var(--x-color);
-  color: var(--x-color); box-shadow: 0 0 15px rgba(255,51,102,0.2);
-  animation: shake 0.4s ease;
-}
-.opt-btn.show-correct {
-  background: rgba(0,255,136,0.1); border-color: var(--success);
-  color: var(--success);
-}
-.opt-btn:disabled { cursor:default; transform:none; }
+.ans-reveal{background:var(--surface2);border:1px solid rgba(255,215,0,.3);border-radius:11px;
+  padding:11px 15px;margin-bottom:14px;color:var(--gold);font-size:.9rem;font-weight:600;
+  text-align:right;line-height:1.5;display:none;}
+.ans-reveal.show{display:block;}
 
-/* TF options */
-.tf-grid {
-  display: grid; grid-template-columns:1fr 1fr;
-  gap: 12px; margin-bottom:20px;
-}
-.tf-btn {
-  padding: 18px;
-  border-radius: 14px; border:2px solid var(--border);
-  font-family:'Cairo',sans-serif; font-size:1.1rem; font-weight:800;
-  cursor:pointer; text-align:center; transition: all 0.2s;
-  background: var(--surface2); color: var(--text);
-}
-.tf-btn.true-btn:hover { border-color:var(--success); background:rgba(0,255,136,0.08); color:var(--success); }
-.tf-btn.false-btn:hover { border-color:var(--x-color); background:rgba(255,51,102,0.08); color:var(--x-color); }
+.m-actions{display:flex;gap:9px;flex-wrap:wrap;}
+.jbtn{flex:1;padding:12px;border:none;border-radius:11px;cursor:pointer;
+  font-family:'Cairo',sans-serif;font-size:.9rem;font-weight:700;transition:all .2s;min-width:90px;}
+.j-ok{background:linear-gradient(135deg,#00cc66,var(--green));color:#000;box-shadow:0 4px 18px rgba(0,255,136,.3);}
+.j-ok:hover{box-shadow:0 6px 28px rgba(0,255,136,.55);transform:translateY(-1px);}
+.j-wrong{background:linear-gradient(135deg,#cc0033,var(--x));color:#fff;box-shadow:0 4px 18px rgba(255,51,102,.3);}
+.j-wrong:hover{box-shadow:0 6px 28px rgba(255,51,102,.55);transform:translateY(-1px);}
+.j-sub{background:linear-gradient(135deg,#5500cc,var(--purple));color:#fff;box-shadow:0 4px 18px rgba(153,69,255,.3);}
+.j-sub:hover{box-shadow:0 6px 28px rgba(153,69,255,.55);transform:translateY(-1px);}
 
-/* Open question */
-.open-input {
-  width:100%; padding:14px; background:var(--surface2);
-  border:1.5px solid var(--border); border-radius:12px;
-  color:var(--text); font-family:'Cairo',sans-serif; font-size:1rem;
-  text-align:right; outline:none; margin-bottom:12px;
-  transition: border-color 0.3s, box-shadow 0.3s;
-}
-.open-input:focus { border-color:var(--o-color); box-shadow:0 0 0 3px rgba(0,212,255,0.15); }
+/* ── RESULT OVERLAY ── */
+.r-overlay{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;
+  background:rgba(5,5,16,.88);backdrop-filter:blur(8px);}
+.r-overlay.show{display:flex;}
+.r-box{text-align:center;animation:popIn .5s ease;padding:30px;}
+.r-icon{font-size:5.5rem;margin-bottom:8px;display:block;}
+.r-text{font-size:1.9rem;font-weight:900;}
+.r-sub{font-size:1rem;color:var(--dim);margin-top:6px;}
 
-.answer-reveal {
-  background: var(--surface2);
-  border: 1px solid rgba(255,215,0,0.3);
-  border-radius:12px; padding:12px 16px;
-  margin-bottom:16px; color:var(--gold);
-  font-size:0.95rem; font-weight:600;
-  text-align:right; line-height:1.5;
-  display:none;
-}
-.answer-reveal.show { display:block; }
+/* ── ROUND END SCREEN ── */
+.round-end-card{background:var(--surface);border:2px solid var(--purple);border-radius:28px;
+  padding:36px 28px;text-align:center;max-width:440px;width:100%;
+  animation:popIn .6s ease;box-shadow:0 0 60px rgba(153,69,255,.25);}
+.re-title{font-size:.9rem;letter-spacing:3px;color:var(--dim);margin-bottom:6px;}
+.re-round{font-size:3rem;font-weight:900;color:var(--purple);margin-bottom:4px;}
+.re-winner{font-size:1.1rem;font-weight:700;margin-bottom:20px;}
+.score-compare{display:flex;gap:10px;margin-bottom:22px;}
+.sc-item{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:12px 14px;}
+.sc-item-name{font-size:.78rem;color:var(--dim);}
+.sc-item-val{font-size:1.7rem;font-weight:900;}
+.sc-item-sub{font-size:.72rem;color:var(--dim);}
+/* round history mini */
+.round-hist{display:flex;gap:6px;justify-content:center;margin-bottom:18px;flex-wrap:wrap;}
+.rh-dot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:.8rem;font-weight:800;border:2px solid;}
+.rh-x{background:rgba(255,51,102,.15);border-color:var(--x);color:var(--x);}
+.rh-o{background:rgba(0,212,255,.15);border-color:var(--o);color:var(--o);}
+.rh-d{background:rgba(100,100,150,.15);border-color:var(--dim);color:var(--dim);}
 
-/* modal action buttons */
-.modal-actions {
-  display:flex; gap:10px; flex-wrap:wrap;
-}
-.btn-judge {
-  flex:1; padding:13px;
-  border:none; border-radius:12px; cursor:pointer;
-  font-family:'Cairo',sans-serif; font-size:0.95rem; font-weight:700;
-  transition: all 0.2s; min-width:100px;
-}
-.btn-correct {
-  background: linear-gradient(135deg, #00cc66, var(--success));
-  color:#000; box-shadow:0 4px 20px rgba(0,255,136,0.3);
-}
-.btn-correct:hover { box-shadow:0 6px 30px rgba(0,255,136,0.5); transform:translateY(-1px); }
-.btn-wrong {
-  background: linear-gradient(135deg, #cc0033, var(--x-color));
-  color:#fff; box-shadow:0 4px 20px rgba(255,51,102,0.3);
-}
-.btn-wrong:hover { box-shadow:0 6px 30px rgba(255,51,102,0.5); transform:translateY(-1px); }
-.btn-submit-open {
-  background: linear-gradient(135deg, #6600cc, #9900ff);
-  color:#fff; box-shadow:0 4px 20px rgba(153,0,255,0.3);
-}
-.btn-submit-open:hover { box-shadow:0 6px 30px rgba(153,0,255,0.5); transform:translateY(-1px); }
+/* ── FINAL WIN ── */
+.final-card{background:var(--surface);border:2px solid var(--gold);border-radius:28px;
+  padding:38px 28px;text-align:center;max-width:440px;width:100%;
+  animation:popIn .6s ease;box-shadow:0 0 70px rgba(255,215,0,.2),0 0 140px rgba(255,215,0,.08);}
+.trophy{font-size:5rem;animation:float 2.2s ease-in-out infinite;margin-bottom:8px;}
+.fw-title{font-size:.9rem;letter-spacing:3px;color:var(--dim);margin-bottom:6px;}
+.fw-name{font-size:2.3rem;font-weight:900;
+  background:linear-gradient(90deg,var(--gold),#fff,var(--gold));background-size:200% auto;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 2s linear infinite;
+  margin-bottom:16px;}
+.confetti-piece{position:fixed;z-index:300;border-radius:2px;animation:confettiFall linear forwards;pointer-events:none;}
 
-/* ===== RESULT FEEDBACK ===== */
-.result-overlay {
-  position:fixed; inset:0; z-index:200;
-  display:none; align-items:center; justify-content:center;
-  background: rgba(5,5,16,0.85);
-  backdrop-filter:blur(6px);
-}
-.result-overlay.show { display:flex; }
-.result-box {
-  text-align:center; animation: popIn 0.5s ease;
-  padding: 40px;
-}
-.result-icon { font-size: 6rem; margin-bottom:10px; display:block; }
-.result-text { font-size:2rem; font-weight:900; }
-.result-sub { font-size:1.1rem; color:var(--text-dim); margin-top:8px; }
+/* ── TRANSFER BANNER ── */
+.xfer-banner{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:150;
+  background:rgba(255,140,0,.92);color:#000;font-weight:800;font-size:.95rem;
+  padding:11px 22px;border-radius:30px;box-shadow:0 4px 20px rgba(255,140,0,.4);
+  display:none;white-space:nowrap;animation:popIn .3s ease;}
+.xfer-banner.show{display:block;}
 
-/* ===== WIN PAGE ===== */
-#winPage {
-  gap: 20px;
-}
-.win-card {
-  background: var(--surface);
-  border: 2px solid var(--gold);
-  border-radius: 28px;
-  padding: 40px 30px;
-  text-align:center;
-  max-width:440px; width:100%;
-  animation: popIn 0.6s ease;
-  box-shadow: 0 0 60px rgba(255,215,0,0.2), 0 0 120px rgba(255,215,0,0.1);
-  position:relative; overflow:hidden;
-}
-.win-trophy { font-size:5rem; margin-bottom:10px; animation:float 2s ease-in-out infinite; }
-.win-title { font-size:1.1rem; color:var(--text-dim); letter-spacing:3px; margin-bottom:8px; }
-.win-team-name {
-  font-size:2.5rem; font-weight:900;
-  background: linear-gradient(90deg, var(--gold), #fff, var(--gold));
-  background-size: 200% auto;
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
-  animation: shimmer 2s linear infinite;
-  margin-bottom:16px;
-}
-.win-score-row {
-  display:flex; gap:12px; justify-content:center; margin-bottom:20px;
-}
-.win-score-item {
-  background:var(--surface2); border:1px solid var(--border);
-  border-radius:14px; padding:12px 20px; flex:1;
-}
-.win-score-item-name { font-size:0.8rem; color:var(--text-dim); }
-.win-score-item-val { font-size:1.6rem; font-weight:800; }
-.btn-restart {
-  width:100%; padding:15px;
-  background: linear-gradient(135deg, var(--gold), #ff9900);
-  border:none; border-radius:14px; color:#000;
-  font-family:'Cairo',sans-serif; font-size:1.1rem; font-weight:800;
-  cursor:pointer; transition:all 0.2s;
-  box-shadow:0 4px 25px rgba(255,215,0,0.4);
-}
-.btn-restart:hover { transform:translateY(-2px); box-shadow:0 8px 35px rgba(255,215,0,0.6); }
+/* ── ADMIN PANEL ── */
+#adminPage{padding:0;align-items:flex-start;justify-content:flex-start;overflow-y:auto;}
+.admin-wrap{width:100%;max-width:900px;margin:0 auto;padding:20px 16px 40px;}
+.admin-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;
+  padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:16px;}
+.admin-logo{font-size:1.3rem;font-weight:900;background:linear-gradient(90deg,var(--gold),#ff9900);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.admin-tabs{display:flex;gap:6px;background:var(--surface2);border-radius:12px;padding:5px;margin-bottom:22px;}
+.atab{flex:1;padding:10px;border:none;border-radius:9px;cursor:pointer;font-family:'Cairo',sans-serif;
+  font-size:.88rem;font-weight:700;background:transparent;color:var(--dim);transition:all .2s;text-align:center;}
+.atab.active{background:var(--surface);color:var(--text);box-shadow:0 2px 10px rgba(0,0,0,.3);}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
 
-/* ===== CONFETTI ===== */
-.confetti-piece {
-  position:fixed; z-index:300;
-  width:10px; height:10px;
-  border-radius:2px;
-  animation: confetti-fall linear forwards;
-  pointer-events:none;
-}
+/* question table */
+.q-list{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
+.q-item{background:var(--surface2);border:1px solid var(--border);border-radius:12px;
+  padding:12px 16px;display:flex;align-items:flex-start;gap:12px;transition:border-color .2s;}
+.q-item:hover{border-color:var(--border);}
+.q-item-info{flex:1;min-width:0;}
+.q-item-type{font-size:.7rem;font-weight:700;padding:2px 9px;border-radius:10px;display:inline-block;margin-bottom:5px;}
+.q-item-text{font-size:.88rem;color:var(--text);line-height:1.5;word-break:break-word;}
+.q-item-ans{font-size:.78rem;color:var(--green);margin-top:3px;}
+.q-actions{display:flex;gap:6px;flex-shrink:0;}
+.icon-btn{width:32px;height:32px;border-radius:8px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:all .2s;}
+.edit-btn{background:rgba(0,212,255,.15);color:var(--o);}
+.edit-btn:hover{background:rgba(0,212,255,.3);}
+.del-btn{background:rgba(255,51,102,.15);color:var(--x);}
+.del-btn:hover{background:rgba(255,51,102,.3);}
 
-/* ===== TRANSFER NOTICE ===== */
-.transfer-banner {
-  position:fixed; top:20px; left:50%; transform:translateX(-50%);
-  z-index:150; background:rgba(255,136,0,0.9);
-  color:#000; font-weight:800; font-size:1rem;
-  padding:12px 24px; border-radius:30px;
-  box-shadow:0 4px 20px rgba(255,136,0,0.4);
-  display:none; white-space:nowrap;
-  animation: popIn 0.3s ease;
-}
-.transfer-banner.show { display:block; }
+/* add question form */
+.add-q-card{background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:20px;}
+.add-q-title{font-size:1rem;font-weight:800;margin-bottom:16px;color:var(--o);}
+.type-select{display:flex;gap:8px;margin-bottom:16px;}
+.type-opt{flex:1;padding:9px 6px;border:1.5px solid var(--border);border-radius:10px;
+  cursor:pointer;text-align:center;font-size:.82rem;font-weight:700;color:var(--dim);
+  background:var(--surface);transition:all .2s;}
+.type-opt.selected.tm{border-color:var(--o);color:var(--o);background:rgba(0,212,255,.08);}
+.type-opt.selected.tt{border-color:var(--gold);color:var(--gold);background:rgba(255,215,0,.08);}
+.type-opt.selected.to{border-color:var(--purple);color:#c87fff;background:rgba(153,69,255,.08);}
+.mcq-opts-wrap{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.opt-inp-wrap{display:flex;align-items:center;gap:6px;}
+.opt-radio{width:18px;height:18px;accent-color:var(--green);cursor:pointer;flex-shrink:0;}
+.opt-inp{flex:1;padding:10px 12px;background:var(--surface);border:1.5px solid var(--border);
+  border-radius:9px;color:var(--text);font-family:'Cairo',sans-serif;font-size:.85rem;
+  outline:none;transition:border-color .3s;text-align:right;}
+.opt-inp:focus{border-color:var(--o);}
+select.inp option{background:var(--surface2);}
 
-/* ===== DRAW PAGE ===== */
-.draw-card {
-  background: var(--surface);
-  border: 2px solid #9900ff;
-  border-radius: 28px;
-  padding: 40px 30px;
-  text-align:center;
-  max-width:400px; width:100%;
-  animation: popIn 0.6s ease;
-  box-shadow: 0 0 60px rgba(153,0,255,0.2);
-}
-.draw-emoji { font-size:5rem; margin-bottom:12px; animation:float 2s ease-in-out infinite; }
-.draw-title { font-size:2rem; font-weight:900; margin-bottom:8px; color:#c87fff; }
+/* stats */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
+.stat-card{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center;}
+.stat-card-val{font-size:2rem;font-weight:900;margin-bottom:4px;}
+.stat-card-lbl{font-size:.78rem;color:var(--dim);}
+.match-hist-list{display:flex;flex-direction:column;gap:8px;}
+.mh-item{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;
+  display:flex;align-items:center;gap:12px;}
+.mh-icon{font-size:1.4rem;}
+.mh-info{flex:1;}
+.mh-teams{font-size:.9rem;font-weight:700;}
+.mh-meta{font-size:.75rem;color:var(--dim);}
+.mh-score{font-size:1.1rem;font-weight:900;}
 
-/* ===== RESPONSIVE ===== */
-@media (max-width:500px) {
-  .options-grid { grid-template-columns:1fr; }
-  .tf-grid { grid-template-columns:1fr 1fr; }
-  .board { max-width:340px; }
-  .qtext { font-size:1rem; }
-  .modal-actions { flex-direction:column; }
+/* settings admin */
+.settings-list{display:flex;flex-direction:column;gap:10px;}
+.s-row{display:flex;align-items:center;gap:12px;background:var(--surface2);border:1px solid var(--border);
+  border-radius:12px;padding:12px 16px;}
+.s-lbl{flex:1;font-size:.9rem;}
+
+/* password modal */
+.pass-modal{background:var(--surface);border:1px solid var(--border);border-radius:22px;
+  padding:32px 28px;max-width:360px;width:100%;animation:popIn .4s ease;
+  box-shadow:0 0 60px rgba(0,0,0,.8);}
+.pass-title{text-align:center;font-size:1.3rem;font-weight:900;margin-bottom:6px;color:var(--gold);}
+.pass-sub{text-align:center;font-size:.85rem;color:var(--dim);margin-bottom:20px;}
+.pass-err{color:var(--x);font-size:.82rem;text-align:center;margin-top:8px;min-height:20px;}
+
+@media(max-width:500px){
+  .opts-grid{grid-template-columns:1fr;}
+  .m-actions{flex-direction:column;}
+  .mcq-opts-wrap{grid-template-columns:1fr;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
 }
 </style>
 </head>
 <body>
-
 <canvas id="bgCanvas"></canvas>
-<div class="transfer-banner" id="transferBanner"></div>
+<div class="xfer-banner" id="xferBanner"></div>
 
-<!-- WELCOME -->
+<!-- ════════════════════════════════════════
+     WELCOME
+════════════════════════════════════════ -->
 <div class="page active" id="welcomePage">
-  <div class="welcome-logo">
+  <div class="logo-wrap">
     <span class="logo-x">X</span>
-    <span style="color:var(--text-dim);font-size:0.5em;vertical-align:middle;margin:0 6px;">vs</span>
+    <span class="logo-sep">vs</span>
     <span class="logo-o">O</span>
   </div>
-  <div class="welcome-title"><span>تحدي المعرفة</span></div>
-  <button class="btn-start" onclick="goTo('setupPage')"><span>🚀 ابدأ اللعبة</span></button>
+  <div class="welcome-sub">تحدي المعرفة</div>
+  <button class="btn-cta" onclick="goTo('setupPage')"><span>🚀 ابدأ اللعبة</span></button>
+  <div class="admin-link" onclick="showPassModal()">⚙️ لوحة التحكم</div>
 </div>
 
-<!-- SETUP -->
+<!-- ════════════════════════════════════════
+     SETUP
+════════════════════════════════════════ -->
 <div class="page" id="setupPage">
-  <div class="setup-card">
-    <div class="setup-title">⚔️ إعداد الفريقين</div>
+  <div class="card" style="max-width:520px">
+    <div class="card-title">⚔️ إعداد المباراة</div>
 
-    <div class="team-input-wrap">
-      <div class="team-label">
-        <div class="team-badge badge-x">X</div>
-        <span>اسم الفريق الأول</span>
-      </div>
-      <input class="team-input x-focus" id="teamXName" type="text" placeholder="مثال: النسور" maxlength="20">
+    <div class="field">
+      <label><div class="tbadge bx">X</div><strong>اسم الفريق الأول</strong></label>
+      <input class="inp x-inp" id="teamXName" type="text" placeholder="مثال: النسور" maxlength="20">
+    </div>
+    <div class="field">
+      <label><div class="tbadge bo">O</div><strong>اسم الفريق الثاني</strong></label>
+      <input class="inp" id="teamOName" type="text" placeholder="مثال: الأسود" maxlength="20">
     </div>
 
-    <div class="team-input-wrap">
-      <div class="team-label">
-        <div class="team-badge badge-o">O</div>
-        <span>اسم الفريق الثاني</span>
-      </div>
-      <input class="team-input" id="teamOName" type="text" placeholder="مثال: الأسود" maxlength="20">
-    </div>
-
-    <div class="settings-row">
-      <span class="settings-label">⏱️ وقت الإجابة (ثانية)</span>
-      <div class="timer-control">
-        <button class="timer-btn" onclick="changeTimer(-5)">−</button>
-        <span id="timerVal">15</span>
-        <button class="timer-btn" onclick="changeTimer(5)">+</button>
+    <div class="row-ctrl">
+      <span class="lbl">🏆 عدد الجولات</span>
+      <div class="num-ctrl">
+        <button class="nb" onclick="chg('rounds',-1)">−</button>
+        <span class="nv" id="roundsVal">3</span>
+        <button class="nb" onclick="chg('rounds',1)">+</button>
       </div>
     </div>
+    <div class="row-ctrl">
+      <span class="lbl">⏱️ وقت الإجابة (ثانية)</span>
+      <div class="num-ctrl">
+        <button class="nb" onclick="chg('timer',-5)">−</button>
+        <span class="nv" id="timerVal">15</span>
+        <button class="nb" onclick="chg('timer',5)">+</button>
+      </div>
+    </div>
 
-    <button class="btn-play" onclick="startGame()">🎮 انطلق!</button>
+    <button class="btn-primary" onclick="startGame()">🎮 انطلق!</button>
+    <button class="btn-primary" style="margin-top:8px;background:transparent;border:1px solid var(--border);color:var(--dim);box-shadow:none;"
+      onclick="goTo('welcomePage')">← رجوع</button>
   </div>
 </div>
 
-<!-- GAME -->
+<!-- ════════════════════════════════════════
+     GAME
+════════════════════════════════════════ -->
 <div class="page" id="gamePage">
-  <div class="game-header">
-    <div class="team-score-card team-x" id="cardX">
-      <div class="team-score-name" id="nameX">فريق X</div>
-      <div class="team-score-symbol sym-x">✕</div>
-      <div class="team-score-val" id="scoreX">0 نقطة</div>
+  <div class="g-header">
+    <div class="score-card sx" id="cardX">
+      <div class="sc-name" id="nameX">فريق X</div>
+      <div class="sc-sym">✕</div>
+      <div class="sc-pts" id="ptsX">0 نقطة</div>
     </div>
-    <div class="turn-indicator">
-      <div class="turn-text">دور</div>
-      <div class="turn-name" id="turnName">—</div>
+    <div class="turn-mid">
+      <div class="turn-lbl">دور</div>
+      <div class="turn-nm" id="turnNm">—</div>
     </div>
-    <div class="team-score-card team-o" id="cardO">
-      <div class="team-score-name" id="nameO">فريق O</div>
-      <div class="team-score-symbol sym-o">◯</div>
-      <div class="team-score-val" id="scoreO">0 نقطة</div>
+    <div class="score-card so" id="cardO">
+      <div class="sc-name" id="nameO">فريق O</div>
+      <div class="sc-sym">◯</div>
+      <div class="sc-pts" id="ptsO">0 نقطة</div>
     </div>
   </div>
 
+  <div class="round-badge" id="roundBadge">الجولة 1 من 3</div>
   <div class="board" id="board"></div>
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-lbl">✅ صحيح</div><div class="stat-val" id="sc" style="color:var(--green)">0</div></div>
+    <div class="stat-box"><div class="stat-lbl">❌ خطأ</div><div class="stat-val" id="sw" style="color:var(--x)">0</div></div>
+    <div class="stat-box"><div class="stat-lbl">📦 متبقي</div><div class="stat-val" id="sl" style="color:var(--gold)">9</div></div>
+    <div class="stat-box"><div class="stat-lbl">🏆 جولات X</div><div class="stat-val" id="rwx" style="color:var(--x)">0</div></div>
+    <div class="stat-box"><div class="stat-lbl">🏆 جولات O</div><div class="stat-val" id="rwo" style="color:var(--o)">0</div></div>
+  </div>
+</div>
 
-  <div class="score-row">
-    <div class="score-box">
-      <div class="score-box-label">✅ إجابات صحيحة</div>
-      <div class="score-box-val" id="totalCorrect" style="color:var(--success)">0</div>
+<!-- ════════════════════════════════════════
+     ROUND END
+════════════════════════════════════════ -->
+<div class="page" id="roundEndPage">
+  <div class="round-end-card">
+    <div class="re-title">انتهت</div>
+    <div class="re-round" id="reRound">الجولة 1</div>
+    <div class="re-winner" id="reWinner">فاز الفريق الأحمر بهذه الجولة!</div>
+    <div class="score-compare">
+      <div class="sc-item">
+        <div class="sc-item-name" id="sc1n">فريق X</div>
+        <div class="sc-item-val" id="sc1v" style="color:var(--x)">0</div>
+        <div class="sc-item-sub">جولات فازها</div>
+      </div>
+      <div class="sc-item">
+        <div class="sc-item-name" id="sc2n">فريق O</div>
+        <div class="sc-item-val" id="sc2v" style="color:var(--o)">0</div>
+        <div class="sc-item-sub">جولات فازها</div>
+      </div>
     </div>
-    <div class="score-box">
-      <div class="score-box-label">❌ إجابات خاطئة</div>
-      <div class="score-box-val" id="totalWrong" style="color:var(--x-color)">0</div>
+    <div class="round-hist" id="roundHist"></div>
+    <button class="btn-primary btn-gold" id="nextRoundBtn" onclick="nextRound()">▶ الجولة التالية</button>
+    <button class="btn-primary" style="margin-top:8px;background:transparent;border:1px solid var(--border);color:var(--dim);box-shadow:none;font-size:.85rem"
+      onclick="showFinalResult()">⏭ إنهاء المباراة</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     FINAL WIN
+════════════════════════════════════════ -->
+<div class="page" id="finalPage">
+  <div class="final-card">
+    <div class="trophy">🏆</div>
+    <div class="fw-title">الفائز بالمباراة الكاملة</div>
+    <div class="fw-name" id="finalWinner">—</div>
+    <div class="score-compare">
+      <div class="sc-item">
+        <div class="sc-item-name" id="fw1n">فريق X</div>
+        <div class="sc-item-val" id="fw1v" style="color:var(--x)">0</div>
+        <div class="sc-item-sub">جولات</div>
+      </div>
+      <div class="sc-item">
+        <div class="sc-item-name" id="fw2n">فريق O</div>
+        <div class="sc-item-val" id="fw2v" style="color:var(--o)">0</div>
+        <div class="sc-item-sub">جولات</div>
+      </div>
     </div>
-    <div class="score-box">
-      <div class="score-box-label">📦 خانات متبقية</div>
-      <div class="score-box-val" id="cellsLeft" style="color:var(--gold)">9</div>
+    <div class="round-hist" id="finalHist"></div>
+    <button class="btn-primary btn-gold" onclick="restartFull()" style="margin-bottom:8px">🔄 مباراة جديدة</button>
+    <button class="btn-primary" style="background:transparent;border:1px solid var(--border);color:var(--dim);box-shadow:none;font-size:.85rem"
+      onclick="goTo('welcomePage')">🏠 الرئيسية</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     ADMIN PASSWORD
+════════════════════════════════════════ -->
+<div class="overlay" id="passOverlay">
+  <div class="pass-modal">
+    <div class="pass-title">🔐 لوحة التحكم</div>
+    <div class="pass-sub">أدخل كلمة السر للمشرف</div>
+    <input class="inp" id="passInp" type="password" placeholder="كلمة السر" style="margin-bottom:4px"
+      onkeydown="if(event.key==='Enter')checkPass()">
+    <div class="pass-err" id="passErr"></div>
+    <button class="btn-primary" onclick="checkPass()" style="margin-top:12px">دخول</button>
+    <button class="btn-primary" onclick="closePassModal()"
+      style="margin-top:8px;background:transparent;border:1px solid var(--border);color:var(--dim);box-shadow:none;">إلغاء</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     QUESTION MODAL
+════════════════════════════════════════ -->
+<div class="overlay" id="qModal">
+  <div class="qmodal">
+    <div class="timer-row">
+      <div class="tarc">
+        <svg viewBox="0 0 56 56"><circle class="arc-bg" cx="28" cy="28" r="26"/><circle class="arc-fill" id="arcFill" cx="28" cy="28" r="26"/></svg>
+        <div class="tnum" id="tNum">15</div>
+      </div>
+      <div class="qmeta">
+        <div id="qBadge" class="qbadge bm">اختيار متعدد</div>
+        <div class="cell-for">الخانة <strong id="qCellN">1</strong> — دور <strong id="qTeamN">الفريق</strong></div>
+      </div>
+    </div>
+    <div class="qtext" id="qText">—</div>
+    <div class="opts-grid" id="mcqOpts"></div>
+    <div class="tf-row" id="tfOpts" style="display:none">
+      <button class="tf-btn t-true" id="tfT" onclick="answerTF(true)">✅ صح</button>
+      <button class="tf-btn t-false" id="tfF" onclick="answerTF(false)">❌ خطأ</button>
+    </div>
+    <div id="openSec" style="display:none">
+      <input class="open-inp" id="openInp" type="text" placeholder="أدخل الإجابة...">
+      <div class="ans-reveal" id="ansReveal"></div>
+      <div class="m-actions" id="openActs">
+        <button class="jbtn j-sub" onclick="revealAns()">👁️ اكشف الإجابة</button>
+      </div>
+    </div>
+    <div class="m-actions" id="judgeActs" style="display:none;margin-top:10px">
+      <button class="jbtn j-ok" onclick="judgeAns(true)">✅ صحيحة</button>
+      <button class="jbtn j-wrong" onclick="judgeAns(false)">❌ خاطئة</button>
     </div>
   </div>
 </div>
 
-<!-- WIN -->
-<div class="page" id="winPage">
-  <div class="win-card">
-    <div class="win-trophy">🏆</div>
-    <div class="win-title">الفائز بالمسابقة</div>
-    <div class="win-team-name" id="winnerName">—</div>
-    <div class="win-score-row">
-      <div class="win-score-item">
-        <div class="win-score-item-name" id="winScore1Name">فريق X</div>
-        <div class="win-score-item-val" id="winScore1Val" style="color:var(--x-color)">0</div>
-      </div>
-      <div class="win-score-item">
-        <div class="win-score-item-name" id="winScore2Name">فريق O</div>
-        <div class="win-score-item-val" id="winScore2Val" style="color:var(--o-color)">0</div>
-      </div>
-    </div>
-    <button class="btn-restart" onclick="restartGame()">🔄 جولة جديدة</button>
+<!-- ════════════════════════════════════════
+     RESULT OVERLAY
+════════════════════════════════════════ -->
+<div class="r-overlay" id="rOverlay">
+  <div class="r-box">
+    <span class="r-icon" id="rIcon">✅</span>
+    <div class="r-text" id="rText">إجابة صحيحة!</div>
+    <div class="r-sub" id="rSub"></div>
   </div>
 </div>
 
-<!-- DRAW PAGE -->
-<div class="page" id="drawPage">
-  <div class="draw-card">
-    <div class="draw-emoji">🤝</div>
-    <div class="draw-title">تعادل!</div>
-    <p style="color:var(--text-dim);margin-bottom:20px;">تساوت الفرق في هذه الجولة</p>
-    <button class="btn-restart" onclick="restartGame()">🔄 العب مجدداً</button>
-  </div>
-</div>
+<!-- ════════════════════════════════════════
+     ADMIN PAGE
+════════════════════════════════════════ -->
+<div class="page" id="adminPage">
+  <div class="admin-wrap">
+    <div class="admin-topbar">
+      <div class="admin-logo">⚙️ لوحة التحكم</div>
+      <button class="btn-primary" style="width:auto;padding:9px 18px;font-size:.85rem;margin:0"
+        onclick="goTo('welcomePage')">← خروج</button>
+    </div>
 
-<!-- QUESTION MODAL -->
-<div class="modal-overlay" id="questionModal">
-  <div class="question-modal">
-    <div class="timer-wrap">
-      <div class="timer-arc-container">
-        <svg viewBox="0 0 56 56"><circle class="timer-arc-bg" cx="28" cy="28" r="26"/><circle class="timer-arc-fill" id="timerArc" cx="28" cy="28" r="26"/></svg>
-        <div class="timer-num" id="timerDisplay">15</div>
+    <div class="admin-tabs">
+      <button class="atab active" onclick="switchTab('questions')">📚 الأسئلة</button>
+      <button class="atab" onclick="switchTab('settings')">⚙️ الإعدادات</button>
+      <button class="atab" onclick="switchTab('stats')">📊 الإحصائيات</button>
+    </div>
+
+    <!-- QUESTIONS TAB -->
+    <div class="tab-content active" id="tab-questions">
+      <div class="add-q-card">
+        <div class="add-q-title">➕ إضافة سؤال جديد</div>
+        <div class="type-select">
+          <div class="type-opt tm selected" onclick="selType('mcq',this)">اختيار متعدد</div>
+          <div class="type-opt tt" onclick="selType('tf',this)">صح / خطأ</div>
+          <div class="type-opt to" onclick="selType('open',this)">مفتوح</div>
+        </div>
+        <input class="inp" id="newQ" type="text" placeholder="نص السؤال..." style="margin-bottom:12px">
+
+        <div id="mcqForm">
+          <div class="mcq-opts-wrap" id="mcqOptInputs">
+            <div class="opt-inp-wrap"><input type="radio" name="correct" class="opt-radio" value="0" checked><input class="opt-inp" placeholder="الخيار 1 (الصحيح)" id="o0"></div>
+            <div class="opt-inp-wrap"><input type="radio" name="correct" class="opt-radio" value="1"><input class="opt-inp" placeholder="الخيار 2" id="o1"></div>
+            <div class="opt-inp-wrap"><input type="radio" name="correct" class="opt-radio" value="2"><input class="opt-inp" placeholder="الخيار 3" id="o2"></div>
+            <div class="opt-inp-wrap"><input type="radio" name="correct" class="opt-radio" value="3"><input class="opt-inp" placeholder="الخيار 4" id="o3"></div>
+          </div>
+          <div style="font-size:.78rem;color:var(--dim);margin-bottom:12px;">☝️ اختر الراديو بجانب الخيار الصحيح</div>
+        </div>
+
+        <div id="tfForm" style="display:none;margin-bottom:12px">
+          <select class="inp" id="tfAnswer">
+            <option value="true">الإجابة: صح ✅</option>
+            <option value="false">الإجابة: خطأ ❌</option>
+          </select>
+        </div>
+
+        <div id="openForm" style="display:none;margin-bottom:12px">
+          <input class="inp" id="openAns" type="text" placeholder="الإجابة الصحيحة...">
+        </div>
+
+        <button class="btn-primary btn-green" onclick="addQuestion()">➕ إضافة السؤال</button>
       </div>
-      <div class="qinfo">
-        <div id="qtypeBadge" class="qtype-badge badge-mcq">اختيار متعدد</div>
-        <div class="cell-for-label">الخانة رقم <strong id="qCellNum">1</strong> — دور <strong id="qTeamName">الفريق</strong></div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="font-size:.9rem;font-weight:700;">📋 قائمة الأسئلة (<span id="qCount">0</span>)</div>
+        <input class="inp" style="max-width:200px;padding:8px 12px;font-size:.82rem" id="qSearch" type="text" placeholder="🔍 بحث..." oninput="renderQList()">
+      </div>
+      <div class="q-list" id="qList"></div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div class="tab-content" id="tab-settings">
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title" style="font-size:1.1rem;margin-bottom:18px">⚙️ إعدادات اللعبة</div>
+        <div class="settings-list">
+          <div class="s-row">
+            <div class="s-lbl">🏆 عدد الجولات الافتراضي</div>
+            <div class="num-ctrl">
+              <button class="nb" onclick="chgDef('defRounds',-1)">−</button>
+              <span class="nv" id="defRoundsVal">3</span>
+              <button class="nb" onclick="chgDef('defRounds',1)">+</button>
+            </div>
+          </div>
+          <div class="s-row">
+            <div class="s-lbl">⏱️ وقت الإجابة الافتراضي (ث)</div>
+            <div class="num-ctrl">
+              <button class="nb" onclick="chgDef('defTimer',-5)">−</button>
+              <span class="nv" id="defTimerVal">15</span>
+              <button class="nb" onclick="chgDef('defTimer',5)">+</button>
+            </div>
+          </div>
+          <div class="s-row">
+            <div class="s-lbl">🔐 تغيير كلمة سر Admin</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input class="inp" id="newPass" type="password" placeholder="كلمة سر جديدة" style="max-width:160px;padding:8px 12px;font-size:.85rem">
+              <button class="nb" style="width:auto;padding:0 12px;font-size:.8rem" onclick="changePass()">حفظ</button>
+            </div>
+          </div>
+        </div>
+        <button class="btn-primary btn-green" onclick="saveSettings()" style="margin-top:16px">💾 حفظ الإعدادات</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="font-size:1.1rem;margin-bottom:14px">🗑️ إدارة البيانات</div>
+        <button class="btn-primary" style="background:linear-gradient(135deg,#550011,var(--x));margin-bottom:8px" onclick="clearHistory()">🗑️ مسح سجل المباريات</button>
+        <button class="btn-primary" style="background:linear-gradient(135deg,#332200,#994400)" onclick="resetQuestions()">♻️ استعادة الأسئلة الافتراضية</button>
       </div>
     </div>
 
-    <div class="qtext" id="qtext">نص السؤال هنا</div>
-
-    <!-- MCQ -->
-    <div id="mcqOptions" class="options-grid"></div>
-
-    <!-- TF -->
-    <div id="tfOptions" class="tf-grid" style="display:none">
-      <button class="tf-btn true-btn" id="tfTrue" onclick="answerTF(true)">✅ صح</button>
-      <button class="tf-btn false-btn" id="tfFalse" onclick="answerTF(false)">❌ خطأ</button>
+    <!-- STATS TAB -->
+    <div class="tab-content" id="tab-stats">
+      <div class="stats-grid" id="statsGrid"></div>
+      <div style="font-size:.9rem;font-weight:700;margin-bottom:10px;">📋 آخر المباريات</div>
+      <div class="match-hist-list" id="matchHistList"></div>
     </div>
-
-    <!-- Open -->
-    <div id="openSection" style="display:none">
-      <input class="open-input" id="openInput" type="text" placeholder="أدخل الإجابة هنا...">
-      <div class="answer-reveal" id="answerReveal"></div>
-      <div class="modal-actions" id="openActions">
-        <button class="btn-judge btn-submit-open" onclick="revealAnswer()">👁️ اكشف الإجابة</button>
-      </div>
-    </div>
-
-    <div class="modal-actions" id="judgeActions" style="display:none;margin-top:10px;">
-      <button class="btn-judge btn-correct" onclick="judgeAnswer(true)">✅ إجابة صحيحة</button>
-      <button class="btn-judge btn-wrong" onclick="judgeAnswer(false)">❌ إجابة خاطئة</button>
-    </div>
-  </div>
-</div>
-
-<!-- RESULT OVERLAY -->
-<div class="result-overlay" id="resultOverlay">
-  <div class="result-box">
-    <span class="result-icon" id="resultIcon">✅</span>
-    <div class="result-text" id="resultText">إجابة صحيحة!</div>
-    <div class="result-sub" id="resultSub"></div>
   </div>
 </div>
 
 <script>
-// ============================================================
-//  QUESTIONS BANK
-// ============================================================
-const questionsBank = [
-  // MCQ - علوم عامة
+// ╔══════════════════════════════════════════════════════════╗
+//  DATA — DEFAULT QUESTIONS
+// ╚══════════════════════════════════════════════════════════╝
+const DEFAULT_QUESTIONS = [
   {t:'mcq',q:'ما هو أكبر كوكب في المجموعة الشمسية؟',opts:['المشتري','زحل','أورانوس','نبتون'],a:0},
-  {t:'mcq',q:'ما عدد أضلاع المثلث؟',opts:['3','4','5','6'],a:0},
   {t:'mcq',q:'ما هو أسرع حيوان بري في العالم؟',opts:['الفهد','الأسد','النمر','الغزال'],a:0},
   {t:'mcq',q:'كم يبلغ عدد أيام السنة الكبيسة؟',opts:['366','365','364','367'],a:0},
   {t:'mcq',q:'ما هي أكبر قارة في العالم؟',opts:['آسيا','أفريقيا','أمريكا الشمالية','أوروبا'],a:0},
-  {t:'mcq',q:'ما هو أعمق محيط في العالم؟',opts:['المحيط الهادئ','المحيط الهندي','المحيط الأطلسي','المحيط المتجمد الشمالي'],a:0},
+  {t:'mcq',q:'ما هو أعمق محيط في العالم؟',opts:['المحيط الهادئ','المحيط الهندي','المحيط الأطلسي','المتجمد الشمالي'],a:0},
   {t:'mcq',q:'ما هو أطول نهر في العالم؟',opts:['النيل','الأمازون','المسيسيبي','اليانغتسي'],a:0},
   {t:'mcq',q:'كم عدد الألوان في قوس قزح؟',opts:['7','6','8','5'],a:0},
-  {t:'mcq',q:'ما هو أصغر دولة في العالم من حيث المساحة؟',opts:['الفاتيكان','موناكو','سان مارينو','ليختنشتاين'],a:0},
+  {t:'mcq',q:'ما هو أصغر دولة في العالم؟',opts:['الفاتيكان','موناكو','سان مارينو','ليختنشتاين'],a:0},
   {t:'mcq',q:'ما هو الرمز الكيميائي للذهب؟',opts:['Au','Go','Gd','Ag'],a:0},
   {t:'mcq',q:'ما هو الرمز الكيميائي للفضة؟',opts:['Ag','Si','Al','Fe'],a:0},
-  {t:'mcq',q:'كم درجة تحتوي الدائرة الكاملة؟',opts:['360','180','270','90'],a:0},
-  {t:'mcq',q:'ما هو أكبر المحيطات مساحة؟',opts:['المحيط الهادئ','المحيط الأطلسي','المحيط الهندي','المحيط المتجمد'],a:0},
   {t:'mcq',q:'ما هي عاصمة فرنسا؟',opts:['باريس','مرسيليا','ليون','نيس'],a:0},
   {t:'mcq',q:'ما هي عاصمة اليابان؟',opts:['طوكيو','أوساكا','كيوتو','هيروشيما'],a:0},
   {t:'mcq',q:'ما هي عاصمة البرازيل؟',opts:['برازيليا','ريو دي جانيرو','ساو باولو','سالفادور'],a:0},
   {t:'mcq',q:'من هو مخترع المصباح الكهربائي؟',opts:['توماس إديسون','ألكسندر بيل','نيكولا تسلا','ألبرت أينشتاين'],a:0},
   {t:'mcq',q:'كم مرة فاز المنتخب البرازيلي بكأس العالم؟',opts:['5','4','3','6'],a:0},
-  {t:'mcq',q:'ما هو أثقل عنصر في الجدول الدوري طبيعياً؟',opts:['أورانيوم','رصاص','ذهب','بلاتين'],a:0},
   {t:'mcq',q:'ما هو الكوكب الأقرب إلى الشمس؟',opts:['عطارد','الزهرة','المريخ','الأرض'],a:0},
-  {t:'mcq',q:'ما هو عدد القارات في العالم؟',opts:['7','6','5','8'],a:0},
-  {t:'mcq',q:'ما هي أطول سلسلة جبلية في العالم؟',opts:['جبال الأنديز','جبال الهيمالايا','جبال الألب','جبال روكي'],a:0},
-  {t:'mcq',q:'ما هو عدد اللاعبين في فريق كرة القدم؟',opts:['11','10','12','9'],a:0},
-  {t:'mcq',q:'ما هي الغاز الأكثر وفرة في غلاف الأرض الجوي؟',opts:['النيتروجين','الأكسجين','ثاني أكسيد الكربون','الأرجون'],a:0},
-  {t:'mcq',q:'ما هو أصغر كوكب في المجموعة الشمسية؟',opts:['عطارد','المريخ','الزهرة','بلوتو'],a:0},
+  {t:'mcq',q:'كم عدد اللاعبين في فريق كرة القدم؟',opts:['11','10','12','9'],a:0},
+  {t:'mcq',q:'ما هي الغاز الأكثر وفرة في الغلاف الجوي؟',opts:['النيتروجين','الأكسجين','ثاني أكسيد الكربون','الأرجون'],a:0},
   {t:'mcq',q:'كم عدد أسنان الإنسان البالغ؟',opts:['32','28','30','34'],a:0},
-  {t:'mcq',q:'ما هو الحيوان الذي ينام وهو واقف؟',opts:['الحصان','الفيل','الزرافة','البقرة'],a:0},
-  {t:'mcq',q:'من كتب رواية 1984؟',opts:['جورج أورويل','ألدوس هكسلي','ف. سكوت فيتزجيرالد','إرنست همنغواي'],a:0},
+  {t:'mcq',q:'من كتب رواية 1984؟',opts:['جورج أورويل','ألدوس هكسلي','ف. سكوت فيتزجيرالد','همنغواي'],a:0},
   {t:'mcq',q:'ما هو أطول جدار بشري في التاريخ؟',opts:['سور الصين العظيم','جدار برلين','جدار هادريان','جدار أوريليان'],a:0},
-  {t:'mcq',q:'ما هو أسرع طائر في العالم؟',opts:['صقر الشاهين','النسر','الشاهين العادي','طائر الفريغت'],a:0},
-
-  // MCQ - جغرافيا
   {t:'mcq',q:'ما هي أكبر دولة عربية مساحة؟',opts:['الجزائر','السعودية','السودان','ليبيا'],a:0},
   {t:'mcq',q:'ما هي أعلى قمة جبلية في العالم؟',opts:['إيفرست','K2','كانشنجونغا','لوتسه'],a:0},
   {t:'mcq',q:'ما هي عاصمة كندا؟',opts:['أوتاوا','تورنتو','مونتريال','فانكوفر'],a:0},
-  {t:'mcq',q:'في أي قارة تقع مصر؟',opts:['أفريقيا','آسيا','الشرق الأوسط','أوروبا'],a:0},
-  {t:'mcq',q:'ما هو أكبر صحراء في العالم؟',opts:['الصحراء الكبرى','صحراء الغوبي','صحراء العرب','صحراء أنتاركتيكا'],a:0},
-
-  // MCQ - تاريخ
   {t:'mcq',q:'في أي عام تأسست المملكة العربية السعودية؟',opts:['1932','1902','1945','1920'],a:0},
-  {t:'mcq',q:'من هو أول رئيس للولايات المتحدة الأمريكية؟',opts:['جورج واشنطن','أبراهام لنكولن','توماس جيفرسون','جون آدامز'],a:0},
+  {t:'mcq',q:'من هو أول رئيس للولايات المتحدة؟',opts:['جورج واشنطن','أبراهام لنكولن','توماس جيفرسون','جون آدامز'],a:0},
   {t:'mcq',q:'متى انتهت الحرب العالمية الثانية؟',opts:['1945','1944','1946','1943'],a:0},
-  {t:'mcq',q:'أي حضارة بنت الأهرامات؟',opts:['المصرية القديمة','الرومانية','اليونانية','الإغريقية'],a:0},
   {t:'mcq',q:'ما هي سنة اكتشاف أمريكا؟',opts:['1492','1498','1500','1488'],a:0},
-
-  // MCQ - رياضة
-  {t:'mcq',q:'ما هو عدد الأشواط في مباراة كرة القدم؟',opts:['شوطان','3 أشواط','شوط واحد','4 أشواط'],a:0},
-  {t:'mcq',q:'في أي رياضة يُستخدم مصطلح Grand Slam؟',opts:['التنس','الغولف','البيسبول','الكريكيت'],a:0},
   {t:'mcq',q:'كم عدد حلقات شعار الأولمبياد؟',opts:['5','4','6','3'],a:0},
-  {t:'mcq',q:'ما هو طول ملعب كرة القدم الرسمي تقريباً؟',opts:['105 متر','90 متر','120 متر','100 متر'],a:0},
-  {t:'mcq',q:'من هو أكثر لاعب تتويجاً بالكرة الذهبية تاريخياً؟',opts:['ليونيل ميسي','كريستيانو رونالدو','رونالدينيو','زيدان'],a:0},
-
-  // MCQ - تقنية وعلوم
+  {t:'mcq',q:'من هو أكثر لاعب تتويجاً بالكرة الذهبية؟',opts:['ليونيل ميسي','كريستيانو رونالدو','رونالدينيو','زيدان'],a:0},
   {t:'mcq',q:'ما هو المعدن الأكثر توصيلاً للكهرباء؟',opts:['الفضة','النحاس','الذهب','الألمنيوم'],a:0},
   {t:'mcq',q:'ما هي سرعة الضوء تقريباً؟',opts:['300,000 كم/ث','150,000 كم/ث','500,000 كم/ث','200,000 كم/ث'],a:0},
-  {t:'mcq',q:'ما هو الجهاز المسؤول عن ضخ الدم في الجسم؟',opts:['القلب','الكبد','الكلى','الرئة'],a:0},
-  {t:'mcq',q:'ما هو أكبر عضو في جسم الإنسان؟',opts:['الجلد','الكبد','الدماغ','الأمعاء'],a:0},
   {t:'mcq',q:'كم عدد عظام جسم الإنسان البالغ؟',opts:['206','210','198','220'],a:0},
   {t:'mcq',q:'ما هو اسم أول قمر صناعي أطلقته البشرية؟',opts:['سبوتنيك','أبولو','فوستوك','أريان'],a:0},
-
+  {t:'mcq',q:'ما هو أكبر عضو في جسم الإنسان؟',opts:['الجلد','الكبد','الدماغ','الأمعاء'],a:0},
+  {t:'mcq',q:'ما هي عاصمة إيطاليا؟',opts:['روما','ميلانو','نابولي','فلورنسا'],a:0},
+  {t:'mcq',q:'ما هو الكوكب المعروف بحلقاته؟',opts:['زحل','المشتري','أورانوس','نبتون'],a:0},
+  {t:'mcq',q:'ما هو العنصر الأكثر وفرة في الكون؟',opts:['الهيدروجين','الهيليوم','الأكسجين','الكربون'],a:0},
+  {t:'mcq',q:'ما هي أقرب مجرة إلى مجرة درب التبانة؟',opts:['أندروميدا','المثلث','سيغنوس','قزم الدرع'],a:0},
+  {t:'mcq',q:'ما هو أكبر محيط في العالم؟',opts:['الهادئ','الأطلسي','الهندي','المتجمد'],a:0},
   // صح وخطأ
   {t:'tf',q:'الأرض هي ثالث كوكب من الشمس.',a:true},
-  {t:'tf',q:'الزئبق هو الفلز الوحيد الذي يكون سائلاً في درجة حرارة الغرفة.',a:true},
-  {t:'tf',q:'الحوت الأزرق هو أضخم حيوان على وجه الأرض حتى الآن.',a:true},
+  {t:'tf',q:'الزئبق هو الفلز الوحيد السائل في درجة حرارة الغرفة.',a:true},
+  {t:'tf',q:'الحوت الأزرق هو أضخم حيوان على وجه الأرض.',a:true},
   {t:'tf',q:'عاصمة أستراليا هي سيدني.',a:false},
   {t:'tf',q:'اليابان جزيرة واحدة.',a:false},
   {t:'tf',q:'الماء يغلي عند 100 درجة مئوية على مستوى سطح البحر.',a:true},
   {t:'tf',q:'الشمس نجم من نوع القزم الأصفر.',a:true},
   {t:'tf',q:'المريخ يملك قمرين.',a:true},
-  {t:'tf',q:'الحشرة الوحيدة التي تنتج غذاء يأكله الإنسان هي النحلة.',a:true},
-  {t:'tf',q:'تُصنَّف الدلافين من فصيلة الأسماك.',a:false},
+  {t:'tf',q:'الدلافين تُصنَّف من فصيلة الأسماك.',a:false},
   {t:'tf',q:'يمتلك الفيل أكبر دماغ بين الحيوانات البرية.',a:true},
-  {t:'tf',q:'الطائر الوحيد غير القادر على الطيران هو البطريق.',a:false},
   {t:'tf',q:'القرآن الكريم يتألف من 114 سورة.',a:true},
   {t:'tf',q:'مدينة دبي هي عاصمة الإمارات العربية المتحدة.',a:false},
   {t:'tf',q:'النمل يمكنه حمل 50 ضعف وزنه.',a:true},
@@ -968,508 +718,597 @@ const questionsBank = [
   {t:'tf',q:'الأفعى تسمع بأذنيها.',a:false},
   {t:'tf',q:'الضوء يسير أسرع من الصوت.',a:true},
   {t:'tf',q:'الدم الأحمر لون طبيعي لدم كل الكائنات الحية.',a:false},
-  {t:'tf',q:'يمكن للإنسان البقاء حياً أسبوعاً دون ماء.',a:false},
-
-  // أسئلة مفتوحة
+  {t:'tf',q:'الطائر الوحيد غير القادر على الطيران هو البطريق.',a:false},
+  {t:'tf',q:'مجموع زوايا المثلث يساوي 180 درجة.',a:true},
+  {t:'tf',q:'القمر يمتلك غلافاً جوياً.',a:false},
+  {t:'tf',q:'أفريقيا هي القارة الأكثر سكاناً في العالم.',a:false},
+  // مفتوحة
   {t:'open',q:'ما هي عاصمة المملكة العربية السعودية؟',a:'الرياض'},
-  {t:'open',q:'ما هو اسم أطول نهر في إفريقيا؟',a:'النيل'},
+  {t:'open',q:'ما هو أطول نهر في إفريقيا؟',a:'النيل'},
   {t:'open',q:'ما هو الحيوان الذي يُعرف بأطول رقبة؟',a:'الزرافة'},
   {t:'open',q:'ما هي العملة الرسمية لليابان؟',a:'الين'},
-  {t:'open',q:'ما هي المادة الأساسية لصنع الزجاج؟',a:'الرمل أو السيليكا'},
   {t:'open',q:'ما هو اسم البحيرة الأكبر في العالم؟',a:'بحر قزوين'},
   {t:'open',q:'ما هي عاصمة الصين؟',a:'بكين'},
   {t:'open',q:'ما هو الكوكب المعروف بالكوكب الأحمر؟',a:'المريخ'},
   {t:'open',q:'ما هو البلد الذي يوجد فيه برج إيفل؟',a:'فرنسا'},
-  {t:'open',q:'ما هي عاصمة إيطاليا؟',a:'روما'},
-  {t:'open',q:'ما هو أكبر محيط في العالم؟',a:'المحيط الهادئ'},
-  {t:'open',q:'ما هو البلد الأكثر سكاناً في العالم؟',a:'الهند أو الصين'},
-  {t:'open',q:'ما هو اسم العملة الأمريكية؟',a:'الدولار'},
-  {t:'open',q:'ما هو العضو الذي ينتج الصفراء في الجسم؟',a:'الكبد'},
-  {t:'open',q:'ما هو الكوكب المعروف بحلقاته الجميلة؟',a:'زحل'},
-  {t:'open',q:'ما هو اسم الصحراء الكبرى؟',a:'الصحراء الكبرى أو صحراء أفريقيا'},
-  {t:'open',q:'ما هو مجموع زوايا المثلث؟',a:'180 درجة'},
-  {t:'open',q:'ما هو الطائر الذي يرمز للسلام؟',a:'الحمامة'},
   {t:'open',q:'ما هي عاصمة ألمانيا؟',a:'برلين'},
   {t:'open',q:'ما هو اسم أشهر تمثال في مصر؟',a:'أبو الهول'},
+  {t:'open',q:'ما هو الطائر الذي يرمز للسلام؟',a:'الحمامة'},
+  {t:'open',q:'ما هو مجموع زوايا المثلث؟',a:'180 درجة'},
+  {t:'open',q:'ما هي عاصمة روسيا؟',a:'موسكو'},
+  {t:'open',q:'ما هو العضو الذي ينتج الصفراء في الجسم؟',a:'الكبد'},
+  {t:'open',q:'ما هي عاصمة إسبانيا؟',a:'مدريد'},
+  {t:'open',q:'ما هو اسم العملة الأمريكية؟',a:'الدولار'},
+  {t:'open',q:'ما هو أكثر فريق تتويجاً بكأس العالم؟',a:'البرازيل'},
+  {t:'open',q:'ما هو اسم مخترع الهاتف؟',a:'ألكسندر غراهام بيل'},
+  {t:'open',q:'كم عدد دول العالم تقريباً؟',a:'195 دولة'},
+  {t:'open',q:'ما هو اسم أكبر صحراء في العالم؟',a:'صحراء أنتاركتيكا أو الصحراء الكبرى'},
 ];
 
-// ============================================================
-//  GAME STATE
-// ============================================================
-let timerSeconds = 15;
-let teams = { x: { name:'فريق X', score:0 }, o: { name:'فريق O', score:0 } };
-let currentTurn = 'x'; // 'x' or 'o'
-let board = Array(9).fill(null); // null | 'x' | 'o'
-let usedQuestions = [];
-let currentQ = null;
-let currentCell = null;
-let timerInterval = null;
-let timerLeft = 0;
-let awaitingSecondChance = false;
-let secondChanceTeam = null;
-let totalCorrect = 0;
-let totalWrong = 0;
-let answerLocked = false;
+// ╔══════════════════════════════════════════════════════════╗
+//  LOCAL STORAGE HELPERS
+// ╚══════════════════════════════════════════════════════════╝
+function ls(k,v){if(v===undefined){try{return JSON.parse(localStorage.getItem(k));}catch{return null;}}else localStorage.setItem(k,JSON.stringify(v));}
 
-// ============================================================
+function loadData(){
+  if(!ls('questions'))ls('questions',DEFAULT_QUESTIONS);
+  if(!ls('adminPass'))ls('adminPass','admin123');
+  if(!ls('defRounds'))ls('defRounds',3);
+  if(!ls('defTimer'))ls('defTimer',15);
+  if(!ls('matchHistory'))ls('matchHistory',[]);
+}
+
+function getQuestions(){return ls('questions')||DEFAULT_QUESTIONS;}
+function saveQuestions(q){ls('questions',q);}
+function getAdminPass(){return ls('adminPass')||'admin123';}
+function getDefRounds(){return ls('defRounds')||3;}
+function getDefTimer(){return ls('defTimer')||15;}
+function getHistory(){return ls('matchHistory')||[];}
+function saveHistory(h){ls('matchHistory',h);}
+
+// ╔══════════════════════════════════════════════════════════╗
 //  BACKGROUND CANVAS
-// ============================================================
-(function initCanvas(){
-  const canvas = document.getElementById('bgCanvas');
-  const ctx = canvas.getContext('2d');
-  let W, H;
-  const particles = [];
-  const PARTICLE_COUNT = 120;
-
-  function resize(){
-    W = canvas.width = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-  }
-  resize();
-  window.addEventListener('resize', resize);
-
-  for(let i=0;i<PARTICLE_COUNT;i++){
-    particles.push({
-      x: Math.random()*window.innerWidth,
-      y: Math.random()*window.innerHeight,
-      r: Math.random()*1.5+0.3,
-      vx: (Math.random()-0.5)*0.15,
-      vy: (Math.random()-0.5)*0.15,
-      alpha: Math.random()*0.7+0.1,
-      color: Math.random()>0.5?'rgba(0,212,255,':'rgba(255,51,102,'
-    });
-  }
-
-  let gridOffset = 0;
-
+// ╚══════════════════════════════════════════════════════════╝
+(function(){
+  const cv=document.getElementById('bgCanvas'),ctx=cv.getContext('2d');
+  let W,H;
+  const pts=[];const N=110;
+  function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;}
+  resize();addEventListener('resize',resize);
+  for(let i=0;i<N;i++)pts.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,
+    r:Math.random()*1.4+.3,vx:(Math.random()-.5)*.14,vy:(Math.random()-.5)*.14,
+    a:Math.random()*.65+.1,c:Math.random()>.5?'rgba(0,212,255,':'rgba(255,51,102,'});
+  let go=0;
   function draw(){
     ctx.clearRect(0,0,W,H);
-
-    // grid
-    ctx.save();
-    gridOffset = (gridOffset+0.2)%60;
-    ctx.strokeStyle='rgba(0,212,255,0.035)';
-    ctx.lineWidth=0.5;
-    for(let x=gridOffset;x<W;x+=60){
-      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke();
+    go=(go+.18)%60;
+    ctx.strokeStyle='rgba(0,212,255,.03)';ctx.lineWidth=.5;
+    for(let x=go;x<W;x+=60){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(let y=go;y<H;y+=60){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    for(const p of pts){
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=p.c+p.a+')';ctx.fill();
     }
-    for(let y=gridOffset;y<H;y+=60){
-      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
-    }
-    ctx.restore();
-
-    // particles
-    for(const p of particles){
-      p.x+=p.vx; p.y+=p.vy;
-      if(p.x<0)p.x=W; if(p.x>W)p.x=0;
-      if(p.y<0)p.y=H; if(p.y>H)p.y=0;
-      ctx.beginPath();
-      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-      ctx.fillStyle = p.color+p.alpha+')';
-      ctx.fill();
-    }
-
     requestAnimationFrame(draw);
   }
   draw();
 })();
 
-// ============================================================
+// ╔══════════════════════════════════════════════════════════╗
 //  NAVIGATION
-// ============================================================
-function goTo(pageId){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById(pageId).classList.add('active');
+// ╚══════════════════════════════════════════════════════════╝
+function goTo(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');}
+
+// ╔══════════════════════════════════════════════════════════╗
+//  SETUP CONTROLS
+// ╚══════════════════════════════════════════════════════════╝
+let setupRounds=3,setupTimer=15;
+function chg(type,d){
+  if(type==='rounds'){setupRounds=Math.max(1,Math.min(10,setupRounds+d));document.getElementById('roundsVal').textContent=setupRounds;}
+  else{setupTimer=Math.max(10,Math.min(60,setupTimer+d));document.getElementById('timerVal').textContent=setupTimer;}
 }
 
-// ============================================================
-//  TIMER CONTROL (SETUP)
-// ============================================================
-function changeTimer(delta){
-  timerSeconds = Math.max(10, Math.min(60, timerSeconds+delta));
-  document.getElementById('timerVal').textContent = timerSeconds;
+// ╔══════════════════════════════════════════════════════════╗
+//  ADMIN PASSWORD
+// ╚══════════════════════════════════════════════════════════╝
+function showPassModal(){document.getElementById('passInp').value='';document.getElementById('passErr').textContent='';document.getElementById('passOverlay').classList.add('show');}
+function closePassModal(){document.getElementById('passOverlay').classList.remove('show');}
+function checkPass(){
+  const v=document.getElementById('passInp').value;
+  if(v===getAdminPass()){closePassModal();openAdmin();}
+  else{document.getElementById('passErr').textContent='❌ كلمة السر خاطئة';}
+}
+function openAdmin(){renderQList();renderStats();goTo('adminPage');}
+
+// ╔══════════════════════════════════════════════════════════╗
+//  GAME STATE
+// ╚══════════════════════════════════════════════════════════╝
+let G={};
+function initGameState(){
+  G={
+    xName:document.getElementById('teamXName').value.trim()||'فريق X',
+    oName:document.getElementById('teamOName').value.trim()||'فريق O',
+    totalRounds:setupRounds,
+    timerSec:setupTimer,
+    currentRound:1,
+    roundWins:{x:0,o:0,d:0},
+    roundHistory:[],      // 'x'|'o'|'d' per round
+    usedIds:[],           // question indices used across ALL rounds
+    board:Array(9).fill(null),
+    turn:'x',
+    locked:false,
+    awaitSecond:false,
+    secondTeam:null,
+    currentCell:null,
+    currentQ:null,
+    timerLeft:0,
+    timerInt:null,
+    roundCorrect:0,
+    roundWrong:0,
+    totalCorrect:0,
+    totalWrong:0,
+  };
 }
 
-// ============================================================
+// ╔══════════════════════════════════════════════════════════╗
 //  START GAME
-// ============================================================
+// ╚══════════════════════════════════════════════════════════╝
 function startGame(){
-  const xName = document.getElementById('teamXName').value.trim() || 'فريق X';
-  const oName = document.getElementById('teamOName').value.trim() || 'فريق O';
-  teams.x = { name:xName, score:0 };
-  teams.o = { name:oName, score:0 };
-  board = Array(9).fill(null);
-  usedQuestions = [];
-  currentTurn = 'x';
-  totalCorrect = 0;
-  totalWrong = 0;
-  answerLocked = false;
-  awaitingSecondChance = false;
-
-  document.getElementById('nameX').textContent = xName;
-  document.getElementById('nameO').textContent = oName;
-  updateScoreDisplay();
+  initGameState();
+  syncUI();
   buildBoard();
   goTo('gamePage');
 }
 
-function updateScoreDisplay(){
-  document.getElementById('scoreX').textContent = teams.x.score+' نقطة';
-  document.getElementById('scoreO').textContent = teams.o.score+' نقطة';
-  document.getElementById('turnName').textContent = currentTurn==='x'?teams.x.name:teams.o.name;
-  document.getElementById('totalCorrect').textContent = totalCorrect;
-  document.getElementById('totalWrong').textContent = totalWrong;
-  const taken = board.filter(c=>c!==null).length;
-  document.getElementById('cellsLeft').textContent = 9-taken;
-
-  // active card
-  document.getElementById('cardX').classList.toggle('active-team', currentTurn==='x');
-  document.getElementById('cardO').classList.toggle('active-team', currentTurn==='o');
+function syncUI(){
+  document.getElementById('nameX').textContent=G.xName;
+  document.getElementById('nameO').textContent=G.oName;
+  document.getElementById('roundBadge').textContent=`الجولة ${G.currentRound} من ${G.totalRounds}`;
+  updateScoreUI();
 }
 
-// ============================================================
+function updateScoreUI(){
+  document.getElementById('ptsX').textContent=G.roundWins.x+' جولة';
+  document.getElementById('ptsO').textContent=G.roundWins.o+' جولة';
+  document.getElementById('turnNm').textContent=G.turn==='x'?G.xName:G.oName;
+  document.getElementById('sc').textContent=G.totalCorrect;
+  document.getElementById('sw').textContent=G.totalWrong;
+  document.getElementById('sl').textContent=G.board.filter(c=>!c).length;
+  document.getElementById('rwx').textContent=G.roundWins.x;
+  document.getElementById('rwo').textContent=G.roundWins.o;
+  document.getElementById('cardX').className='score-card sx'+(G.turn==='x'?' active':'');
+  document.getElementById('cardO').className='score-card so'+(G.turn==='o'?' active':'');
+}
+
+// ╔══════════════════════════════════════════════════════════╗
 //  BOARD
-// ============================================================
+// ╚══════════════════════════════════════════════════════════╝
 function buildBoard(){
-  const boardEl = document.getElementById('board');
-  boardEl.innerHTML='';
+  const el=document.getElementById('board');el.innerHTML='';
   for(let i=0;i<9;i++){
-    const cell = document.createElement('div');
-    cell.className='cell';
-    cell.id='cell-'+i;
-    cell.innerHTML='<span class="cell-num">'+(i+1)+'</span>';
-    cell.addEventListener('click',()=>cellClick(i));
-    boardEl.appendChild(cell);
+    const c=document.createElement('div');c.className='cell';c.id='c'+i;
+    c.innerHTML='<span class="cnum">'+(i+1)+'</span>';
+    c.addEventListener('click',()=>cellClick(i));
+    el.appendChild(c);
   }
 }
 
-function cellClick(idx){
-  if(board[idx]!==null||answerLocked)return;
-  currentCell=idx;
-  openQuestion(idx);
+function cellClick(i){if(G.board[i]||G.locked)return;G.currentCell=i;openQ(i);}
+
+function paintCell(i){
+  const c=document.getElementById('c'+i);const v=G.board[i];
+  if(v==='x'){c.className='cell taken cx';c.innerHTML='✕';}
+  else if(v==='o'){c.className='cell taken co';c.innerHTML='◯';}
 }
 
-function renderCell(idx){
-  const cell = document.getElementById('cell-'+idx);
-  const v = board[idx];
-  if(v==='x'){
-    cell.className='cell taken taken-x'; cell.innerHTML='✕';
-  } else if(v==='o'){
-    cell.className='cell taken taken-o'; cell.innerHTML='◯';
-  }
-}
-
-// ============================================================
-//  WIN CHECK
-// ============================================================
-const WIN_LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
-
+const WINS=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 function checkWin(){
-  for(const line of WIN_LINES){
-    const [a,b,c]=line;
-    if(board[a]&&board[a]===board[b]&&board[b]===board[c]){
-      highlightWin(line);
-      return board[a];
+  for(const [a,b,c] of WINS){
+    if(G.board[a]&&G.board[a]===G.board[b]&&G.board[b]===G.board[c]){
+      [a,b,c].forEach(i=>document.getElementById('c'+i).classList.add('win'));
+      return G.board[a];
     }
   }
-  if(board.every(c=>c!==null)) return 'draw';
+  if(G.board.every(Boolean))return'draw';
   return null;
 }
 
-function highlightWin(line){
-  for(const idx of line){
-    document.getElementById('cell-'+idx).classList.add('win-cell');
+// ╔══════════════════════════════════════════════════════════╗
+//  QUESTION PICK — no repeat across rounds
+// ╚══════════════════════════════════════════════════════════╝
+function pickQ(){
+  const all=getQuestions();
+  const avail=all.map((_,i)=>i).filter(i=>!G.usedIds.includes(i));
+  if(!avail.length){
+    // all used — only reset within already-used to avoid repeats from this point
+    G.usedIds=[];
+    return pickQ();
   }
+  const idx=avail[Math.floor(Math.random()*avail.length)];
+  G.usedIds.push(idx);
+  return {...all[idx],_idx:idx};
 }
 
-// ============================================================
-//  QUESTION LOGIC
-// ============================================================
-function pickQuestion(){
-  const available = questionsBank.filter((_,i)=>!usedQuestions.includes(i));
-  if(!available.length){
-    usedQuestions=[];
-    return pickQuestion();
-  }
-  const pool = questionsBank.map((_,i)=>i).filter(i=>!usedQuestions.includes(i));
-  const idx = pool[Math.floor(Math.random()*pool.length)];
-  usedQuestions.push(idx);
-  return questionsBank[idx];
-}
+// ╔══════════════════════════════════════════════════════════╗
+//  OPEN QUESTION
+// ╚══════════════════════════════════════════════════════════╝
+function openQ(cell){
+  G.locked=true;G.currentQ=pickQ();
+  const q=G.currentQ;
+  document.getElementById('qCellN').textContent=cell+1;
+  document.getElementById('qTeamN').textContent=G.awaitSecond?(G.secondTeam==='x'?G.xName:G.oName):(G.turn==='x'?G.xName:G.oName);
+  document.getElementById('qText').textContent=q.q;
 
-function openQuestion(cellIdx){
-  answerLocked=true;
-  currentQ = pickQuestion();
+  // reset
+  ['mcqOpts','tfOpts','openSec','judgeActs'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('mcqOpts').innerHTML='';
+  document.getElementById('ansReveal').classList.remove('show');
+  document.getElementById('openActs').style.display='flex';
 
-  document.getElementById('qCellNum').textContent = cellIdx+1;
-  document.getElementById('qTeamName').textContent = awaitingSecondChance
-    ? (secondChanceTeam==='x'?teams.x.name:teams.o.name)
-    : (currentTurn==='x'?teams.x.name:teams.o.name);
-  document.getElementById('qtext').textContent = currentQ.q;
+  const badge=document.getElementById('qBadge');
+  if(q.t==='mcq'){badge.className='qbadge bm';badge.textContent='اختيار متعدد';buildMCQ(q);}
+  else if(q.t==='tf'){badge.className='qbadge bt';badge.textContent='صح أم خطأ';
+    document.getElementById('tfOpts').style.display='grid';
+    document.getElementById('tfT').disabled=false;document.getElementById('tfF').disabled=false;
+    document.getElementById('tfT').style.opacity='1';document.getElementById('tfF').style.opacity='1';}
+  else{badge.className='qbadge bo2';badge.textContent='سؤال مفتوح';
+    document.getElementById('openSec').style.display='block';document.getElementById('openInp').value='';}
 
-  // reset sections
-  document.getElementById('mcqOptions').innerHTML='';
-  document.getElementById('mcqOptions').style.display='none';
-  document.getElementById('tfOptions').style.display='none';
-  document.getElementById('openSection').style.display='none';
-  document.getElementById('judgeActions').style.display='none';
-  document.getElementById('answerReveal').classList.remove('show');
-  document.getElementById('answerReveal').textContent='';
-  document.getElementById('openActions').style.display='flex';
-
-  // type badge
-  const badge = document.getElementById('qtypeBadge');
-  if(currentQ.t==='mcq'){
-    badge.className='qtype-badge badge-mcq'; badge.textContent='اختيار متعدد';
-    buildMCQ();
-  } else if(currentQ.t==='tf'){
-    badge.className='qtype-badge badge-tf'; badge.textContent='صح أم خطأ';
-    document.getElementById('tfOptions').style.display='grid';
-    document.getElementById('tfTrue').disabled=false;
-    document.getElementById('tfFalse').disabled=false;
-    document.getElementById('tfTrue').style.opacity='1';
-    document.getElementById('tfFalse').style.opacity='1';
-  } else {
-    badge.className='qtype-badge badge-open'; badge.textContent='سؤال مفتوح';
-    document.getElementById('openSection').style.display='block';
-    document.getElementById('openInput').value='';
-  }
-
-  document.getElementById('questionModal').classList.add('show');
+  document.getElementById('qModal').classList.add('show');
   startTimer();
 }
 
-function buildMCQ(){
-  const grid = document.getElementById('mcqOptions');
-  grid.style.display='grid';
-  currentQ.opts.forEach((opt,i)=>{
-    const btn=document.createElement('button');
-    btn.className='opt-btn';
-    btn.textContent=opt;
-    btn.addEventListener('click',()=>answerMCQ(i,btn));
-    grid.appendChild(btn);
+function buildMCQ(q){
+  const g=document.getElementById('mcqOpts');g.style.display='grid';
+  q.opts.forEach((opt,i)=>{
+    const b=document.createElement('button');b.className='opt';b.textContent=opt;
+    b.addEventListener('click',()=>answerMCQ(i,b));g.appendChild(b);
   });
 }
 
-// ============================================================
+// ╔══════════════════════════════════════════════════════════╗
 //  TIMER
-// ============================================================
+// ╚══════════════════════════════════════════════════════════╝
 function startTimer(){
-  clearInterval(timerInterval);
-  timerLeft=timerSeconds;
-  updateTimerUI();
-  timerInterval=setInterval(()=>{
-    timerLeft--;
-    updateTimerUI();
-    if(timerLeft<=0){
-      clearInterval(timerInterval);
-      timeUp();
-    }
-  },1000);
+  clearInterval(G.timerInt);G.timerLeft=G.timerSec;updateTimerUI();
+  G.timerInt=setInterval(()=>{G.timerLeft--;updateTimerUI();if(G.timerLeft<=0){clearInterval(G.timerInt);timeUp();}},1000);
 }
-
 function updateTimerUI(){
-  const arc=document.getElementById('timerArc');
-  const num=document.getElementById('timerDisplay');
-  const circumference=163;
-  const pct=timerLeft/timerSeconds;
-  arc.style.strokeDashoffset=circumference*(1-pct);
-  num.textContent=timerLeft;
-  if(timerLeft<=5){
-    arc.style.stroke='var(--x-color)';
-    num.style.color='var(--x-color)';
-    num.style.animation='timerWarning 0.5s ease infinite';
-  } else {
-    arc.style.stroke='var(--o-color)';
-    num.style.color='var(--o-color)';
-    num.style.animation='none';
-  }
+  const arc=document.getElementById('arcFill');const num=document.getElementById('tNum');
+  arc.style.strokeDashoffset=163*(1-G.timerLeft/G.timerSec);
+  num.textContent=G.timerLeft;
+  if(G.timerLeft<=5){arc.style.stroke='var(--x)';num.style.color='var(--x)';num.style.animation='timerWarn .5s ease infinite';}
+  else{arc.style.stroke='var(--o)';num.style.color='var(--o)';num.style.animation='none';}
 }
+function timeUp(){lockOpts();if(!G.awaitSecond){offerSecond();}else{closeQ(false,true);}}
+function lockOpts(){document.querySelectorAll('.opt,.tf-btn').forEach(b=>{b.disabled=true;b.style.opacity='.45';});}
 
-function timeUp(){
-  // lock all buttons
-  lockAllOptions();
-  if(!awaitingSecondChance){
-    // pass to other team
-    offerSecondChance();
-  } else {
-    // second chance also failed
-    closeModal(false, true);
-  }
-}
-
-function lockAllOptions(){
-  document.querySelectorAll('.opt-btn,.tf-btn').forEach(b=>{b.disabled=true; b.style.opacity='0.5';});
-}
-
-// ============================================================
+// ╔══════════════════════════════════════════════════════════╗
 //  ANSWER HANDLERS
-// ============================================================
-function answerMCQ(idx, btn){
-  if(answerLocked===false)return;
-  clearInterval(timerInterval);
-  lockAllOptions();
-  const correct = idx===currentQ.a;
-  document.querySelectorAll('.opt-btn')[currentQ.a].classList.add('show-correct');
-  if(correct){
-    btn.classList.add('selected-correct');
-    closeModal(true, false);
-  } else {
-    btn.classList.add('selected-wrong');
-    if(!awaitingSecondChance){
-      setTimeout(()=>offerSecondChance(),800);
-    } else {
-      setTimeout(()=>closeModal(false,false),800);
-    }
-  }
+// ╚══════════════════════════════════════════════════════════╝
+function answerMCQ(idx,btn){
+  clearInterval(G.timerInt);lockOpts();
+  const correct=idx===G.currentQ.a;
+  document.querySelectorAll('.opt')[G.currentQ.a].classList.add('reveal');
+  if(correct){btn.classList.add('ok');closeQ(true,false);}
+  else{btn.classList.add('wrong');if(!G.awaitSecond)setTimeout(offerSecond,750);else setTimeout(()=>closeQ(false,false),750);}
 }
-
-function answerTF(answer){
-  clearInterval(timerInterval);
-  lockAllOptions();
-  const correct = answer===currentQ.a;
-  if(correct){
-    closeModal(true,false);
-  } else {
-    if(!awaitingSecondChance){
-      setTimeout(()=>offerSecondChance(),500);
-    } else {
-      setTimeout(()=>closeModal(false,false),500);
-    }
-  }
+function answerTF(ans){
+  clearInterval(G.timerInt);lockOpts();
+  const correct=ans===G.currentQ.a;
+  if(correct)closeQ(true,false);
+  else{if(!G.awaitSecond)setTimeout(offerSecond,500);else setTimeout(()=>closeQ(false,false),500);}
 }
-
-function revealAnswer(){
-  document.getElementById('answerReveal').textContent='✅ الإجابة الصحيحة: '+currentQ.a;
-  document.getElementById('answerReveal').classList.add('show');
-  document.getElementById('openActions').style.display='none';
-  document.getElementById('judgeActions').style.display='flex';
-  clearInterval(timerInterval);
+function revealAns(){
+  document.getElementById('ansReveal').textContent='✅ الإجابة: '+G.currentQ.a;
+  document.getElementById('ansReveal').classList.add('show');
+  document.getElementById('openActs').style.display='none';
+  document.getElementById('judgeActs').style.display='flex';
+  clearInterval(G.timerInt);
 }
+function judgeAns(ok){closeQ(ok,false);}
 
-function judgeAnswer(isCorrect){
-  closeModal(isCorrect, false);
-}
-
-// ============================================================
+// ╔══════════════════════════════════════════════════════════╗
 //  SECOND CHANCE
-// ============================================================
-function offerSecondChance(){
-  document.getElementById('questionModal').classList.remove('show');
-  awaitingSecondChance=true;
-  secondChanceTeam=currentTurn;
-  const otherTeam = currentTurn==='x'?'o':'x';
-  const otherName = teams[otherTeam].name;
-  showTransferBanner('⚡ السؤال ينتقل إلى '+otherName+'!');
-  currentTurn=otherTeam;
-  updateScoreDisplay();
-  setTimeout(()=>{
-    hideTransferBanner();
-    openQuestion(currentCell);
-  },1800);
+// ╚══════════════════════════════════════════════════════════╝
+function offerSecond(){
+  document.getElementById('qModal').classList.remove('show');
+  G.awaitSecond=true;G.secondTeam=G.turn;
+  const other=G.turn==='x'?'o':'x';
+  showXfer('⚡ السؤال ينتقل إلى '+(other==='x'?G.xName:G.oName)+'!');
+  G.turn=other;updateScoreUI();
+  setTimeout(()=>{hideXfer();openQ(G.currentCell);},1800);
 }
 
-function showTransferBanner(msg){
-  const b=document.getElementById('transferBanner');
-  b.textContent=msg; b.classList.add('show');
-}
-function hideTransferBanner(){
-  document.getElementById('transferBanner').classList.remove('show');
-}
+function showXfer(m){const b=document.getElementById('xferBanner');b.textContent=m;b.classList.add('show');}
+function hideXfer(){document.getElementById('xferBanner').classList.remove('show');}
 
-// ============================================================
-//  CLOSE MODAL & RESOLVE
-// ============================================================
-function closeModal(isCorrect, timeExpired){
-  clearInterval(timerInterval);
-  document.getElementById('questionModal').classList.remove('show');
+// ╔══════════════════════════════════════════════════════════╗
+//  CLOSE QUESTION & RESOLVE
+// ╚══════════════════════════════════════════════════════════╝
+function closeQ(ok,expired){
+  clearInterval(G.timerInt);
+  document.getElementById('qModal').classList.remove('show');
 
-  if(isCorrect){
-    totalCorrect++;
-    board[currentCell]=currentTurn;
-    renderCell(currentCell);
-    teams[currentTurn].score++;
-    updateScoreDisplay();
-    showResult(true, (currentTurn==='x'?teams.x.name:teams.o.name)+' أجاب صحيحاً! 🎉');
+  if(ok){
+    G.totalCorrect++;G.roundCorrect++;
+    G.board[G.currentCell]=G.turn;
+    paintCell(G.currentCell);
+    updateScoreUI();
+    showResult(true,(G.turn==='x'?G.xName:G.oName)+' أجاب صحيحاً! 🎉');
 
-    const winner=checkWin();
-    if(winner&&winner!=='draw'){
-      setTimeout(()=>{ hideResult(); showWinner(winner); },1800);
-      return;
-    } else if(winner==='draw'){
-      setTimeout(()=>{ hideResult(); goTo('drawPage'); },1800);
-      return;
+    const w=checkWin();
+    if(w&&w!=='draw'){
+      setTimeout(()=>{hideResult();endRound(w);},1800);return;
+    }else if(w==='draw'){
+      setTimeout(()=>{hideResult();endRound('draw');},1800);return;
     }
-
-    // next turn: winner goes
-    awaitingSecondChance=false;
-    answerLocked=false;
+    G.awaitSecond=false;G.locked=false;
     setTimeout(hideResult,1600);
-
-  } else {
-    totalWrong++;
-    // cell stays unclaimed
-    showResult(false, timeExpired?'انتهى الوقت! الخانة بلا إجابة 😮':'إجابة خاطئة! الخانة تضيع ❌');
-
-    awaitingSecondChance=false;
-    // turn goes to original team (opposite of current)
-    currentTurn=currentTurn==='x'?'o':'x';
-    updateScoreDisplay();
-    answerLocked=false;
+  }else{
+    G.totalWrong++;G.roundWrong++;
+    showResult(false,expired?'انتهى الوقت! الخانة بلا فائز ❌':'إجابة خاطئة! الخانة تضيع ❌');
+    G.awaitSecond=false;G.turn=G.turn==='x'?'o':'x';updateScoreUI();G.locked=false;
     setTimeout(hideResult,1600);
   }
 }
 
-// ============================================================
+// ╔══════════════════════════════════════════════════════════╗
+//  ROUND END
+// ╚══════════════════════════════════════════════════════════╝
+function endRound(winner){
+  // record
+  if(winner==='x'){G.roundWins.x++;G.roundHistory.push('x');}
+  else if(winner==='o'){G.roundWins.o++;G.roundHistory.push('o');}
+  else{G.roundWins.d++;G.roundHistory.push('d');}
+
+  // round end screen
+  document.getElementById('reRound').textContent='الجولة '+G.currentRound;
+  document.getElementById('reWinner').textContent=winner==='x'?'🏆 فاز '+G.xName+' بهذه الجولة!'
+    :winner==='o'?'🏆 فاز '+G.oName+' بهذه الجولة!':'🤝 تعادلت الجولة!';
+  document.getElementById('sc1n').textContent=G.xName;
+  document.getElementById('sc2n').textContent=G.oName;
+  document.getElementById('sc1v').textContent=G.roundWins.x;
+  document.getElementById('sc2v').textContent=G.roundWins.o;
+
+  // mini history
+  const hist=document.getElementById('roundHist');hist.innerHTML='';
+  G.roundHistory.forEach((r,i)=>{
+    const d=document.createElement('div');
+    d.className='rh-dot rh-'+r;d.textContent='J'+(i+1);hist.appendChild(d);
+  });
+
+  // next button
+  const isLast=G.currentRound>=G.totalRounds;
+  document.getElementById('nextRoundBtn').textContent=isLast?'🏆 النتيجة النهائية':'▶ الجولة التالية';
+  document.getElementById('nextRoundBtn').onclick=isLast?showFinalResult:nextRound;
+
+  if(winner!=='draw')launchConfetti(6);
+  goTo('roundEndPage');
+}
+
+function nextRound(){
+  G.currentRound++;
+  G.board=Array(9).fill(null);
+  G.turn='x';G.locked=false;G.awaitSecond=false;G.roundCorrect=0;G.roundWrong=0;
+  syncUI();buildBoard();goTo('gamePage');
+}
+
+// ╔══════════════════════════════════════════════════════════╗
+//  FINAL RESULT
+// ╚══════════════════════════════════════════════════════════╝
+function showFinalResult(){
+  // determine overall winner
+  let fw='draw';
+  if(G.roundWins.x>G.roundWins.o)fw='x';
+  else if(G.roundWins.o>G.roundWins.x)fw='o';
+
+  document.getElementById('finalWinner').textContent=
+    fw==='x'?'🏆 '+G.xName:fw==='o'?'🏆 '+G.oName:'🤝 تعادل!';
+  document.getElementById('fw1n').textContent=G.xName;
+  document.getElementById('fw2n').textContent=G.oName;
+  document.getElementById('fw1v').textContent=G.roundWins.x;
+  document.getElementById('fw2v').textContent=G.roundWins.o;
+
+  const fh=document.getElementById('finalHist');fh.innerHTML='';
+  G.roundHistory.forEach((r,i)=>{
+    const d=document.createElement('div');d.className='rh-dot rh-'+r;d.textContent='J'+(i+1);fh.appendChild(d);
+  });
+
+  // save to history
+  const h=getHistory();
+  h.unshift({date:new Date().toLocaleDateString('ar-SA'),
+    x:G.xName,o:G.oName,wx:G.roundWins.x,wo:G.roundWins.o,wd:G.roundWins.d,
+    winner:fw==='x'?G.xName:fw==='o'?G.oName:'تعادل',
+    correct:G.totalCorrect,wrong:G.totalWrong});
+  if(h.length>20)h.pop();
+  saveHistory(h);
+
+  if(fw!=='draw')launchConfetti(12);
+  goTo('finalPage');
+}
+
+function restartFull(){goTo('setupPage');}
+
+// ╔══════════════════════════════════════════════════════════╗
 //  RESULT OVERLAY
-// ============================================================
-function showResult(correct, msg){
-  document.getElementById('resultIcon').textContent=correct?'✅':'❌';
-  document.getElementById('resultText').textContent=correct?'إجابة صحيحة!':'إجابة خاطئة!';
-  document.getElementById('resultSub').textContent=msg;
-  document.getElementById('resultOverlay').classList.add('show');
+// ╚══════════════════════════════════════════════════════════╝
+function showResult(ok,msg){
+  document.getElementById('rIcon').textContent=ok?'✅':'❌';
+  document.getElementById('rText').textContent=ok?'إجابة صحيحة!':'إجابة خاطئة!';
+  document.getElementById('rSub').textContent=msg;
+  document.getElementById('rOverlay').classList.add('show');
 }
-function hideResult(){
-  document.getElementById('resultOverlay').classList.remove('show');
-}
+function hideResult(){document.getElementById('rOverlay').classList.remove('show');}
 
-// ============================================================
-//  WIN
-// ============================================================
-function showWinner(team){
-  launchConfetti();
-  document.getElementById('winnerName').textContent=teams[team].name;
-  document.getElementById('winScore1Name').textContent=teams.x.name;
-  document.getElementById('winScore1Val').textContent=teams.x.score;
-  document.getElementById('winScore2Name').textContent=teams.o.name;
-  document.getElementById('winScore2Val').textContent=teams.o.score;
-  goTo('winPage');
-}
-
-function launchConfetti(){
-  const colors=['#ff3366','#00d4ff','#ffd700','#00ff88','#c87fff','#ff8800'];
-  for(let i=0;i<80;i++){
-    const el=document.createElement('div');
-    el.className='confetti-piece';
-    el.style.left=Math.random()*100+'vw';
-    el.style.top='-20px';
-    el.style.background=colors[Math.floor(Math.random()*colors.length)];
-    el.style.width=(Math.random()*10+6)+'px';
-    el.style.height=(Math.random()*10+6)+'px';
-    el.style.borderRadius=Math.random()>0.5?'50%':'2px';
-    el.style.animationDuration=(Math.random()*2+2)+'s';
-    el.style.animationDelay=Math.random()*1+'s';
-    document.body.appendChild(el);
-    setTimeout(()=>el.remove(),4000);
+// ╔══════════════════════════════════════════════════════════╗
+//  CONFETTI
+// ╚══════════════════════════════════════════════════════════╝
+function launchConfetti(factor){
+  const cols=['#ff3366','#00d4ff','#ffd700','#00ff88','#c87fff','#ff8800'];
+  for(let i=0;i<factor*6;i++){
+    const el=document.createElement('div');el.className='confetti-piece';
+    el.style.left=Math.random()*100+'vw';el.style.top='-20px';
+    el.style.background=cols[Math.floor(Math.random()*cols.length)];
+    el.style.width=(Math.random()*10+6)+'px';el.style.height=(Math.random()*10+6)+'px';
+    el.style.borderRadius=Math.random()>.5?'50%':'2px';
+    el.style.animationDuration=(Math.random()*2+2)+'s';el.style.animationDelay=Math.random()+'s';
+    document.body.appendChild(el);setTimeout(()=>el.remove(),4200);
   }
 }
 
-// ============================================================
-//  RESTART
-// ============================================================
-function restartGame(){
-  goTo('setupPage');
+// ╔══════════════════════════════════════════════════════════╗
+//  ADMIN — TABS
+// ╚══════════════════════════════════════════════════════════╝
+function switchTab(name){
+  document.querySelectorAll('.atab').forEach((t,i)=>{
+    t.classList.toggle('active',['questions','settings','stats'][i]===name);
+  });
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='stats')renderStats();
 }
+
+// ╔══════════════════════════════════════════════════════════╗
+//  ADMIN — QUESTION TYPE SELECT
+// ╚══════════════════════════════════════════════════════════╝
+let newQType='mcq';
+function selType(type,el){
+  newQType=type;
+  document.querySelectorAll('.type-opt').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('mcqForm').style.display=type==='mcq'?'block':'none';
+  document.getElementById('tfForm').style.display=type==='tf'?'block':'none';
+  document.getElementById('openForm').style.display=type==='open'?'block':'none';
+}
+
+// ╔══════════════════════════════════════════════════════════╗
+//  ADMIN — ADD QUESTION
+// ╚══════════════════════════════════════════════════════════╝
+function addQuestion(){
+  const qtext=document.getElementById('newQ').value.trim();
+  if(!qtext)return alert('❌ أدخل نص السؤال');
+  const qs=getQuestions();
+  if(newQType==='mcq'){
+    const opts=[0,1,2,3].map(i=>document.getElementById('o'+i).value.trim());
+    if(opts.some(o=>!o))return alert('❌ أدخل كل الخيارات الأربعة');
+    const correct=parseInt(document.querySelector('input[name="correct"]:checked').value);
+    qs.push({t:'mcq',q:qtext,opts,a:correct});
+  }else if(newQType==='tf'){
+    const ans=document.getElementById('tfAnswer').value==='true';
+    qs.push({t:'tf',q:qtext,a:ans});
+  }else{
+    const ans=document.getElementById('openAns').value.trim();
+    if(!ans)return alert('❌ أدخل الإجابة الصحيحة');
+    qs.push({t:'open',q:qtext,a:ans});
+  }
+  saveQuestions(qs);
+  document.getElementById('newQ').value='';
+  [0,1,2,3].forEach(i=>{const el=document.getElementById('o'+i);if(el)el.value='';});
+  document.getElementById('openAns').value='';
+  renderQList();
+  alert('✅ تمت إضافة السؤال!');
+}
+
+// ╔══════════════════════════════════════════════════════════╗
+//  ADMIN — RENDER QUESTION LIST
+// ╚══════════════════════════════════════════════════════════╝
+function renderQList(){
+  const qs=getQuestions();
+  const search=document.getElementById('qSearch').value.trim().toLowerCase();
+  document.getElementById('qCount').textContent=qs.length;
+  const list=document.getElementById('qList');list.innerHTML='';
+  qs.forEach((q,i)=>{
+    if(search&&!q.q.toLowerCase().includes(search))return;
+    const typeTxt=q.t==='mcq'?'اختيار متعدد':q.t==='tf'?'صح / خطأ':'مفتوح';
+    const typeCls=q.t==='mcq'?'bm':q.t==='tf'?'bt':'bo2';
+    const ansTxt=q.t==='mcq'?q.opts[q.a]:q.t==='tf'?(q.a?'صح ✅':'خطأ ❌'):q.a;
+    const item=document.createElement('div');item.className='q-item';
+    item.innerHTML=`
+      <div class="q-item-info">
+        <span class="q-item-type qbadge ${typeCls}">${typeTxt}</span>
+        <div class="q-item-text">${q.q}</div>
+        <div class="q-item-ans">✅ ${ansTxt}</div>
+      </div>
+      <div class="q-actions">
+        <button class="icon-btn del-btn" onclick="deleteQ(${i})" title="حذف">🗑️</button>
+      </div>`;
+    list.appendChild(item);
+  });
+}
+
+function deleteQ(i){
+  if(!confirm('هل تريد حذف هذا السؤال؟'))return;
+  const qs=getQuestions();qs.splice(i,1);saveQuestions(qs);renderQList();
+}
+
+// ╔══════════════════════════════════════════════════════════╗
+//  ADMIN — SETTINGS
+// ╚══════════════════════════════════════════════════════════╝
+let defR=3,defT=15;
+function initAdminSettings(){defR=getDefRounds();defT=getDefTimer();document.getElementById('defRoundsVal').textContent=defR;document.getElementById('defTimerVal').textContent=defT;}
+function chgDef(k,d){
+  if(k==='defRounds'){defR=Math.max(1,Math.min(10,defR+d));document.getElementById('defRoundsVal').textContent=defR;}
+  else{defT=Math.max(10,Math.min(60,defT+d));document.getElementById('defTimerVal').textContent=defT;}
+}
+function saveSettings(){
+  ls('defRounds',defR);ls('defTimer',defT);
+  setupRounds=defR;setupTimer=defT;
+  document.getElementById('roundsVal').textContent=defR;
+  document.getElementById('timerVal').textContent=defT;
+  alert('✅ تم حفظ الإعدادات!');
+}
+function changePass(){
+  const v=document.getElementById('newPass').value.trim();
+  if(!v)return alert('❌ أدخل كلمة سر جديدة');
+  ls('adminPass',v);document.getElementById('newPass').value='';alert('✅ تم تغيير كلمة السر!');
+}
+function clearHistory(){if(confirm('هل تريد مسح كل سجل المباريات؟')){saveHistory([]);renderStats();alert('✅ تم المسح!');}}
+function resetQuestions(){if(confirm('سيتم استبدال كل الأسئلة بالأسئلة الافتراضية. متأكد؟')){saveQuestions(DEFAULT_QUESTIONS);renderQList();alert('✅ تمت الاستعادة!');}}
+
+// ╔══════════════════════════════════════════════════════════╗
+//  ADMIN — STATS
+// ╚══════════════════════════════════════════════════════════╝
+function renderStats(){
+  const h=getHistory();
+  const sg=document.getElementById('statsGrid');
+  const total=h.length;
+  const totCorrect=h.reduce((s,m)=>s+m.correct,0);
+  const totWrong=h.reduce((s,m)=>s+m.wrong,0);
+  const qs=getQuestions();
+  sg.innerHTML=`
+    <div class="stat-card"><div class="stat-card-val" style="color:var(--gold)">${total}</div><div class="stat-card-lbl">مباريات ملعوبة</div></div>
+    <div class="stat-card"><div class="stat-card-val" style="color:var(--green)">${totCorrect}</div><div class="stat-card-lbl">إجابات صحيحة</div></div>
+    <div class="stat-card"><div class="stat-card-val" style="color:var(--x)">${totWrong}</div><div class="stat-card-lbl">إجابات خاطئة</div></div>
+    <div class="stat-card"><div class="stat-card-val" style="color:var(--o)">${qs.length}</div><div class="stat-card-lbl">أسئلة في البنك</div></div>`;
+
+  const mhl=document.getElementById('matchHistList');mhl.innerHTML='';
+  if(!h.length){mhl.innerHTML='<div style="color:var(--dim);text-align:center;padding:20px">لا توجد مباريات بعد</div>';return;}
+  h.forEach(m=>{
+    const item=document.createElement('div');item.className='mh-item';
+    item.innerHTML=`
+      <div class="mh-icon">🎮</div>
+      <div class="mh-info">
+        <div class="mh-teams">${m.x} ضد ${m.o}</div>
+        <div class="mh-meta">${m.date} · ✅${m.correct} ❌${m.wrong}</div>
+      </div>
+      <div class="mh-score" style="color:var(--gold)">${m.wx}—${m.wo}</div>`;
+    mhl.appendChild(item);
+  });
+}
+
+// ╔══════════════════════════════════════════════════════════╗
+//  INIT
+// ╚══════════════════════════════════════════════════════════╝
+(function init(){
+  loadData();
+  setupRounds=getDefRounds();setupTimer=getDefTimer();
+  document.getElementById('roundsVal').textContent=setupRounds;
+  document.getElementById('timerVal').textContent=setupTimer;
+  initAdminSettings();
+})();
 </script>
 </body>
 </html>
